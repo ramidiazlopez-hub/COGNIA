@@ -1,4 +1,187 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+// jsPDF se carga dinámicamente desde CDN
+let jsPDFLib = null;
+async function loadJsPDF() {
+  if(jsPDFLib) return jsPDFLib;
+  return new Promise((resolve) => {
+    if(window.jspdf) { jsPDFLib = window.jspdf.jsPDF; resolve(jsPDFLib); return; }
+    const s = document.createElement("script");
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+    s.onload = () => { jsPDFLib = window.jspdf.jsPDF; resolve(jsPDFLib); };
+    document.head.appendChild(s);
+  });
+}
+
+async function exportReportPDF(patient, ev, testDef, reportText, semaforo, nextActions, status, professionalName) {
+  const JsPDF = await loadJsPDF();
+  const doc = new JsPDF({ orientation:"portrait", unit:"mm", format:"a4" });
+  const W = 210; const margin = 20; const col = W - margin*2;
+  let y = 20;
+
+  // Helper functions
+  const addText = (text, x, size=10, style="normal", color=[30,30,30]) => {
+    doc.setFontSize(size); doc.setFont("helvetica", style); doc.setTextColor(...color);
+    doc.text(text, x, y);
+  };
+  const addWrapped = (text, x, size=10, style="normal", color=[60,60,60], maxW=col) => {
+    doc.setFontSize(size); doc.setFont("helvetica", style); doc.setTextColor(...color);
+    const lines = doc.splitTextToSize(text, maxW);
+    doc.text(lines, x, y);
+    y += lines.length * (size * 0.4) + 2;
+  };
+  const addLine = (color=[220,220,220]) => {
+    doc.setDrawColor(...color); doc.setLineWidth(0.3);
+    doc.line(margin, y, W-margin, y); y += 4;
+  };
+  const addSpace = (n=4) => { y += n; };
+
+  // ── HEADER ──
+  // Logo bar
+  doc.setFillColor(15, 23, 42);
+  doc.rect(0, 0, W, 28, "F");
+
+  // COGNIA wordmark
+  doc.setFontSize(20); doc.setFont("helvetica","bold"); doc.setTextColor(255,255,255);
+  doc.text("COGN", margin, 18);
+  doc.setTextColor(175, 169, 236);
+  const cognW = doc.getTextWidth("COGN");
+  doc.text("IA", margin + cognW, 18);
+
+  // Subtitle
+  doc.setFontSize(8); doc.setFont("helvetica","normal"); doc.setTextColor(148,163,184);
+  doc.text("EVALUACIÓN EN SALUD MENTAL", margin + cognW + doc.getTextWidth("IA") + 4, 18);
+
+  // Date top right
+  doc.setFontSize(8); doc.setTextColor(148,163,184);
+  doc.text(new Date().toLocaleDateString("es-AR", {day:"2-digit",month:"long",year:"numeric"}), W-margin, 18, {align:"right"});
+
+  y = 36;
+
+  // ── SEMÁFORO ──
+  const semColors = {
+    "Verde":   [34,197,94],
+    "Amarillo":[251,191,36],
+    "Naranja": [249,115,22],
+    "Rojo":    [239,68,68],
+  };
+  const sc = semColors[semaforo.label] || [148,163,184];
+  doc.setFillColor(...sc.map(c=>Math.min(c,255)));
+  doc.roundedRect(margin, y, col, 14, 2, 2, "F");
+  doc.setFontSize(11); doc.setFont("helvetica","bold"); doc.setTextColor(255,255,255);
+  doc.text(`${semaforo.emoji || "●"}  ${semaforo.label} — ${semaforo.desc}`, margin+4, y+9);
+  y += 20;
+
+  // ── DATOS DEL INFORME ──
+  const td = testDef;
+  const sr = td.score(ev.total);
+  doc.setFontSize(9); doc.setFont("helvetica","normal"); doc.setTextColor(100,116,139);
+  doc.text("INFORME CLÍNICO DE EVALUACIÓN PSICOLÓGICA", margin, y);
+  y += 6; addLine([71,85,105]);
+
+  // Patient + test info grid
+  const infoRows = [
+    ["Paciente", patient.name + (patient.age ? `, ${patient.age} años` : "")],
+    ["Instrumento", `${td.fullName} (${td.name})`],
+    ["Área clínica", CATEGORIES[td.category]?.label || td.category],
+    ["Puntaje obtenido", `${ev.total} / ${td.maxScore} — ${sr.level}`],
+    ["Fecha de evaluación", ev.date],
+    ["Estado del informe", (status || "Generado").charAt(0).toUpperCase() + (status||"generado").slice(1)],
+  ];
+  if(professionalName) infoRows.push(["Profesional", professionalName]);
+
+  infoRows.forEach(([label, val]) => {
+    doc.setFontSize(9); doc.setFont("helvetica","bold"); doc.setTextColor(71,85,105);
+    doc.text(label+":", margin, y);
+    doc.setFont("helvetica","normal"); doc.setTextColor(30,30,30);
+    doc.text(val, margin+42, y);
+    y += 6;
+  });
+
+  addSpace(2); addLine(); addSpace(2);
+
+  // ── INFORME IA ──
+  doc.setFontSize(10); doc.setFont("helvetica","bold"); doc.setTextColor(30,30,30);
+  doc.text("INFORME CLÍNICO", margin, y); y += 6;
+
+  // Worsening alert if present
+  if(semaforo.worsening) {
+    doc.setFillColor(249,115,22,30);
+    doc.setDrawColor(249,115,22);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(margin, y, col, 10, 1, 1, "FD");
+    doc.setFontSize(9); doc.setFont("helvetica","bold"); doc.setTextColor(249,115,22);
+    doc.text(`⚠  Cambio clínicamente relevante — variación de +${semaforo.delta} pts respecto de la medición previa`, margin+3, y+6.5);
+    y += 14;
+  }
+
+  // Report text
+  const cleanText = (reportText || "").replace(/\*\*/g,"").replace(/###/g,"").replace(/##/g,"");
+  const sections = cleanText.split("
+").filter(l=>l.trim());
+  sections.forEach(line => {
+    if(y > 265) { doc.addPage(); y = 20; }
+    const isHeading = /^\d+\./.test(line.trim()) || line.trim().endsWith(":");
+    doc.setFontSize(isHeading ? 10 : 9.5);
+    doc.setFont("helvetica", isHeading ? "bold" : "normal");
+    doc.setTextColor(isHeading ? 30 : 60, isHeading ? 30 : 60, isHeading ? 30 : 60);
+    const wrapped = doc.splitTextToSize(line, col);
+    doc.text(wrapped, margin, y);
+    y += wrapped.length * (isHeading ? 5 : 4.5) + (isHeading ? 2 : 1);
+  });
+
+  addSpace(4); addLine(); addSpace(2);
+
+  // ── PRÓXIMAS ACCIONES ──
+  if(nextActions && nextActions.length > 0) {
+    if(y > 240) { doc.addPage(); y = 20; }
+    doc.setFontSize(10); doc.setFont("helvetica","bold"); doc.setTextColor(30,30,30);
+    doc.text("PRÓXIMAS ACCIONES SUGERIDAS", margin, y); y += 4;
+    doc.setFontSize(8); doc.setFont("helvetica","italic"); doc.setTextColor(100,116,139);
+    doc.text("Sugerencias automáticas — requieren validación y aprobación del profesional tratante", margin, y); y += 7;
+
+    nextActions.forEach((action, i) => {
+      if(y > 270) { doc.addPage(); y = 20; }
+      doc.setFillColor(124,58,237,20);
+      doc.setDrawColor(124,58,237,60);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(margin, y, col, 9, 1, 1, "FD");
+      doc.setFontSize(9); doc.setFont("helvetica","normal"); doc.setTextColor(30,30,30);
+      const actionLines = doc.splitTextToSize(`${i+1}. ${action}`, col-6);
+      doc.text(actionLines, margin+3, y+5.5);
+      y += 12;
+    });
+
+    addSpace(4); addLine(); addSpace(2);
+  }
+
+  // ── FIRMA ──
+  if(y > 240) { doc.addPage(); y = 20; }
+  if(status === "firmado" && professionalName) {
+    doc.setFontSize(9); doc.setFont("helvetica","bold"); doc.setTextColor(34,197,94);
+    doc.text("✓ INFORME FIRMADO DIGITALMENTE", margin, y); y += 5;
+    doc.setFont("helvetica","normal"); doc.setTextColor(71,85,105);
+    doc.text(`Profesional: ${professionalName}`, margin, y); y += 5;
+    doc.text(`Fecha de firma: ${new Date().toLocaleDateString("es-AR")}`, margin, y); y += 5;
+    doc.text("Sistema COGNIA — Evaluaciones en Salud Mental", margin, y); y += 10;
+    addLine([34,197,94]);
+  }
+
+  // ── FOOTER ──
+  const totalPages = doc.internal.getNumberOfPages();
+  for(let i=1; i<=totalPages; i++) {
+    doc.setPage(i);
+    doc.setFillColor(15,23,42);
+    doc.rect(0, 287, W, 10, "F");
+    doc.setFontSize(7); doc.setFont("helvetica","normal"); doc.setTextColor(148,163,184);
+    doc.text("COGNIA · Evaluaciones en Salud Mental · Uso exclusivo del profesional tratante", margin, 293);
+    doc.text(`Página ${i} de ${totalPages}`, W-margin, 293, {align:"right"});
+  }
+
+  // Download
+  const patName = patient.name.replace(/\s+/g,"_");
+  doc.save(`COGNIA_${td.name}_${patName}_${ev.date}.pdf`);
+}
 
 // ─── CATEGORIES ───────────────────────────────────────────────────────────────
 const CATEGORIES = {
@@ -472,37 +655,80 @@ const MOCK_PATIENTS = [
 async function generateReport(patient, evaluation, testDef) {
   const sr = testDef.score(evaluation.total);
   const max = testDef.maxScore;
-  const prev = patient.evaluations.filter(e => e.testId === evaluation.testId && e.id !== evaluation.id);
-  const trend = prev.length > 0
-    ? `Evaluaciones previas: ${prev.map(e=>e.total).join(", ")}. Tendencia: ${evaluation.total < prev[prev.length-1].total ? "mejoría clínica" : "aumento de síntomas"}.`
+  const prevEvals = patient.evaluations.filter(e => e.testId === evaluation.testId && e.id !== evaluation.id).sort((a,b)=>a.date.localeCompare(b.date));
+  const prevEval = prevEvals.length > 0 ? prevEvals[prevEvals.length-1] : null;
+  const semaforo = getSemaforo(evaluation.testId, evaluation.total, prevEval?.total ?? null, evaluation.answers);
+  const nextActions = getNextActions(evaluation.testId, evaluation.total, semaforo, evaluation.answers);
+  const trend = prevEval
+    ? `Evaluación previa: ${prevEval.total} pts (${prevEval.date}). Cambio: ${evaluation.total - prevEval.total > 0 ? "+" : ""}${evaluation.total - prevEval.total} pts — ${semaforo.worsening ? "EMPEORAMIENTO CLÍNICAMENTE RELEVANTE" : evaluation.total < prevEval.total ? "mejoría clínica" : "sin cambio significativo"}.`
     : "Primera evaluación registrada.";
   const catLabel = CATEGORIES[testDef.category].label;
+  const suicideAlert = (evaluation.testId==="phq9" && evaluation.answers?.[8]>=2) || (evaluation.testId==="bdi2" && evaluation.answers?.[8]>=2);
 
-  const prompt = `Eres un asistente clínico especializado en salud mental. Genera un informe clínico breve y profesional en español para:
+  const prompt = `Eres un asistente clínico especializado en salud mental. Genera un informe clínico profesional en español.
 
 Paciente: ${patient.name}, ${patient.age} años
 Instrumento: ${testDef.fullName} (${testDef.name})
 Área: ${catLabel}
 Puntaje: ${evaluation.total}/${max} — ${sr.level}
-Descripción: ${sr.desc}
+Alerta: ${semaforo.label} — ${semaforo.desc}
 Fecha: ${evaluation.date}
 ${trend}
+${suicideAlert ? "ALERTA URGENTE: Presencia de ideación suicida reportada." : ""}
 
 El informe debe incluir:
 1. Resumen ejecutivo (2-3 oraciones)
-2. Interpretación clínica del puntaje en contexto del instrumento
-3. Áreas de atención prioritaria
+2. Interpretación clínica del puntaje
+3. ${semaforo.worsening ? "Análisis del empeoramiento respecto de la medición previa" : "Áreas de atención prioritaria"}
 4. 3-4 líneas terapéuticas basadas en evidencia
-5. Recomendaciones de seguimiento y frecuencia
+5. Próximas acciones sugeridas (aclarar que requieren validación profesional): ${nextActions.join("; ")}
 
-Tono clínico, empático, basado en evidencia. Máximo 380 palabras.`;
+Tono clínico, empático, basado en evidencia. Máximo 420 palabras.`;
 
   const r = await fetch("https://api.anthropic.com/v1/messages",{
     method:"POST", headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({ model:"claude-sonnet-4-20250514", max_tokens:1000, messages:[{role:"user",content:prompt}] })
+    body: JSON.stringify({ model:"claude-sonnet-4-20250514", max_tokens:1200, messages:[{role:"user",content:prompt}] })
   });
   const data = await r.json();
   return data.content?.[0]?.text || "No se pudo generar el informe.";
+}
+
+// ─── SEMÁFORO CLÍNICO ────────────────────────────────────────────────────────
+function getSemaforo(testId, total, prevTotal, answers) {
+  const td = TESTS[testId];
+  const pct = total / td.maxScore;
+  const suicideRisk = (testId==="phq9" && answers?.[8]>=2) || (testId==="bdi2" && answers?.[8]>=2);
+  if(suicideRisk) return { color:"#ef4444", label:"Rojo", desc:"Riesgo suicida detectado — evaluación urgente", emoji:"🔴" };
+  if(prevTotal !== null && prevTotal !== undefined) {
+    const pctDelta = (total - prevTotal) / td.maxScore;
+    if(pctDelta >= 0.15) return { color:"#f97316", label:"Naranja", desc:"Cambio clínicamente relevante respecto de medición previa", emoji:"🟠", delta: total - prevTotal, worsening:true };
+  }
+  if(pct >= 0.75) return { color:"#ef4444", label:"Rojo", desc:"Severidad alta — intervención urgente recomendada", emoji:"🔴" };
+  if(pct >= 0.50) return { color:"#f97316", label:"Naranja", desc:"Severidad moderada-alta — seguimiento activo", emoji:"🟠" };
+  if(pct >= 0.25) return { color:"#fbbf24", label:"Amarillo", desc:"Síntomas leves a moderados — monitoreo recomendado", emoji:"🟡" };
+  return { color:"#22c55e", label:"Verde", desc:"Sin alerta clínica relevante", emoji:"🟢" };
+}
+
+function getNextActions(testId, total, semaforo, answers) {
+  const td = TESTS[testId];
+  const pct = total / td.maxScore;
+  const suicideRisk = (testId==="phq9" && answers?.[8]>=2) || (testId==="bdi2" && answers?.[8]>=2);
+  const actions = [];
+  if(suicideRisk) actions.push("Evaluar riesgo suicida de forma inmediata");
+  if(semaforo.worsening) actions.push("Intensificar seguimiento — cambio clínicamente relevante detectado");
+  if(pct >= 0.75) actions.push("Considerar interconsulta o derivación especializada");
+  if(pct >= 0.5) actions.push("Indicar entrevista clínica en los próximos 7 días");
+  if(td.category==="depresion") { if(pct>=0.5) actions.push("Explorar bipolaridad y descartar causas orgánicas"); actions.push("Repetir escala en 14 días"); if(pct>=0.35) actions.push("Iniciar módulo psicoeducativo sobre depresión"); }
+  if(td.category==="ansiedad") { actions.push("Evaluar calidad del sueño asociada"); actions.push("Repetir escala en 14 días"); }
+  if(td.category==="trauma") { actions.push("Explorar red de apoyo y recursos de afrontamiento"); if(pct>=0.4) actions.push("Evaluar indicación de psicoterapia orientada al trauma"); }
+  if(td.category==="sustancias") { if(pct>=0.5) actions.push("Evaluar adherencia y motivación al cambio"); actions.push("Aplicar entrevista motivacional breve"); }
+  if(td.category==="sueno") { actions.push("Revisar higiene del sueño y factores mantenedores"); if(pct>=0.5) actions.push("Considerar derivación a estudio de sueño"); }
+  if(td.category==="cognicion") { if(pct<0.7) actions.push("Aplicar evaluación neuropsicológica completa"); actions.push("Evaluar factores reversibles (medicación, sueño, depresión)"); }
+  if(td.category==="bipolar") { if(pct>=0.4) actions.push("Evaluar estado de ánimo actual y ciclicidad"); actions.push("Revisar adherencia farmacológica"); }
+  if(td.category==="toc") { if(pct>=0.4) actions.push("Considerar TCC con exposición y prevención de respuesta"); }
+  if(td.category==="personalidad") { actions.push("Explorar historia vincular y patrones relacionales"); }
+  if(actions.length===0) actions.push("Repetir escala según protocolo habitual");
+  return [...new Set(actions)].slice(0,4);
 }
 
 // ─── UI HELPERS ───────────────────────────────────────────────────────────────
@@ -655,6 +881,9 @@ export default function App() {
   const [searchTest,setSearchTest]=useState("");
   const [sidebarOpen,setSidebarOpen]=useState(true);
   const [assignDropdownOpen,setAssignDropdownOpen]=useState(false);
+  const [reportStatus,setReportStatus]=useState({});
+  const [professionalName,setProfessionalName]=useState("");
+  const [pdfLoading,setPdfLoading]=useState(false);
 
   const currentPatient = selectedPatientId ? patients.find(p=>p.id===selectedPatientId) : null;
 
@@ -668,11 +897,16 @@ export default function App() {
 
   const handleGenerateReport=async(patient,ev)=>{
     const td=TESTS[ev.testId];
-    setReport({loading:true,text:null});
+    const prevEvals=patient.evaluations.filter(e=>e.testId===ev.testId&&e.id!==ev.id).sort((a,b)=>a.date.localeCompare(b.date));
+    const prevEval=prevEvals.length>0?prevEvals[prevEvals.length-1]:null;
+    const semaforo=getSemaforo(ev.testId,ev.total,prevEval?.total??null,ev.answers);
+    const nextActions=getNextActions(ev.testId,ev.total,semaforo,ev.answers);
+    setReport({loading:true,text:null,ev,patient,semaforo,nextActions});
     try {
       const text=await generateReport(patient,ev,td);
-      setReport({loading:false,text});
-    } catch { setReport({loading:false,text:"Error al generar el informe."}); }
+      setReport(r=>({...r,loading:false,text}));
+      setReportStatus(s=>({...s,[ev.id]: s[ev.id] || "generado"}));
+    } catch { setReport(r=>({...r,loading:false,text:"Error al generar el informe."})); }
   };
 
   const handleAddPatient=()=>{
@@ -735,23 +969,113 @@ export default function App() {
 
       {report && (
         <div style={{position:"fixed",inset:0,background:"#000c",display:"flex",alignItems:"center",justifyContent:"center",zIndex:200,padding:20}}>
-          <div style={{...S.card,maxWidth:580,width:"100%",maxHeight:"85vh",overflow:"auto",animation:"fadeIn 0.2s ease"}}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"start",marginBottom:18}}>
+          <div style={{...S.card,maxWidth:600,width:"100%",maxHeight:"90vh",overflow:"auto",animation:"fadeIn 0.2s ease"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"start",marginBottom:16}}>
               <div>
                 <h3 style={{color:"#f1f5f9",margin:"0 0 4px",fontFamily:"'DM Serif Display'",fontSize:20}}>Informe clínico</h3>
                 <p style={{color:"#64748b",fontSize:12,margin:0}}>Generado con IA · Claude Sonnet</p>
               </div>
               <button style={{...S.ghost,padding:"4px 10px"}} onClick={()=>setReport(null)}>✕</button>
             </div>
+
+            {/* Semáforo */}
+            {report.semaforo && (
+              <div style={{background:report.semaforo.color+"18",border:`1px solid ${report.semaforo.color}44`,borderRadius:10,padding:"10px 14px",marginBottom:14,display:"flex",alignItems:"center",gap:10}}>
+                <span style={{fontSize:18}}>{report.semaforo.emoji}</span>
+                <div>
+                  <p style={{margin:0,fontSize:13,fontWeight:700,color:report.semaforo.color}}>{report.semaforo.label}</p>
+                  <p style={{margin:0,fontSize:12,color:"#94a3b8"}}>{report.semaforo.desc}</p>
+                </div>
+              </div>
+            )}
+
             {report.loading ? (
               <div style={{textAlign:"center",padding:40}}>
                 <div style={{width:36,height:36,borderRadius:"50%",border:"3px solid #1e293b",borderTopColor:"#7c3aed",margin:"0 auto 14px",animation:"spin 1s linear infinite"}}/>
                 <p style={{color:"#64748b",fontSize:13}}>Generando informe con IA…</p>
               </div>
             ) : (
-              <div style={{background:"#070c18",borderRadius:11,padding:18,border:"1px solid #1e293b",fontSize:13,lineHeight:1.9,color:"#cbd5e1",whiteSpace:"pre-wrap"}}>
-                {report.text}
-              </div>
+              <>
+                <div style={{background:"#070c18",borderRadius:11,padding:18,border:"1px solid #1e293b",fontSize:13,lineHeight:1.9,color:"#cbd5e1",whiteSpace:"pre-wrap",marginBottom:14}}>
+                  {report.text}
+                </div>
+
+                {/* Próximas acciones */}
+                {report.nextActions && report.nextActions.length > 0 && (
+                  <div style={{background:"#0f172a",border:"1px solid #334155",borderRadius:11,padding:16,marginBottom:14}}>
+                    <p style={{fontSize:11,fontWeight:700,letterSpacing:2,color:"#475569",textTransform:"uppercase",margin:"0 0 10px"}}>Próxima acción sugerida</p>
+                    <p style={{fontSize:11,color:"#475569",margin:"0 0 10px",fontStyle:"italic"}}>Sugerencias automáticas — requieren validación profesional</p>
+                    {report.nextActions.map((a,i)=>(
+                      <div key={i} style={{display:"flex",alignItems:"start",gap:8,marginBottom:7}}>
+                        <span style={{color:"#7c3aed",fontSize:14,marginTop:1}}>→</span>
+                        <p style={{margin:0,fontSize:13,color:"#e2e8f0"}}>{a}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Validación profesional */}
+                {report.ev && (
+                  <div style={{borderTop:"1px solid #1e293b",paddingTop:14}}>
+                    <p style={{fontSize:11,fontWeight:700,letterSpacing:2,color:"#475569",textTransform:"uppercase",margin:"0 0 10px"}}>Estado del informe</p>
+                    <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:12}}>
+                      {[
+                        {id:"generado",label:"Generado",color:"#64748b"},
+                        {id:"revisado",label:"Revisado",color:"#3b82f6"},
+                        {id:"corregido",label:"Corregido",color:"#f59e0b"},
+                        {id:"firmado",label:"Firmado",color:"#22c55e"},
+                        {id:"archivado",label:"Archivado",color:"#475569"},
+                      ].map(s=>{
+                        const active = (reportStatus[report.ev.id] || "generado") === s.id;
+                        return (
+                          <button key={s.id} onClick={()=>setReportStatus(prev=>({...prev,[report.ev.id]:s.id}))} style={{
+                            background: active ? s.color+"33" : "transparent",
+                            border: `1px solid ${active ? s.color : "#334155"}`,
+                            borderRadius:8, padding:"6px 14px",
+                            color: active ? s.color : "#64748b",
+                            cursor:"pointer", fontSize:12, fontFamily:"inherit",
+                            fontWeight: active ? 700 : 400
+                          }}>{s.label}</button>
+                        );
+                      })}
+                    </div>
+                    {/* Professional name for signature */}
+                    <div style={{marginBottom:12}}>
+                      <p style={{fontSize:11,fontWeight:700,letterSpacing:2,color:"#475569",textTransform:"uppercase",margin:"0 0 6px"}}>Nombre del profesional (para firma)</p>
+                      <input
+                        placeholder="Dr./Dra. Nombre Apellido — Matrícula"
+                        value={professionalName}
+                        onChange={e=>setProfessionalName(e.target.value)}
+                        style={{width:"100%",background:"#070c18",border:"1px solid #334155",borderRadius:8,padding:"8px 12px",color:"#e2e8f0",fontSize:13,fontFamily:"inherit",boxSizing:"border-box"}}
+                      />
+                    </div>
+                    {reportStatus[report.ev.id]==="firmado" && (
+                      <p style={{fontSize:11,color:"#22c55e",marginBottom:12}}>✓ Firmado — {professionalName || "profesional"} · {new Date().toLocaleDateString("es-AR")}</p>
+                    )}
+                    {/* PDF Download button */}
+                    <button
+                      disabled={pdfLoading || !report.text}
+                      onClick={async()=>{
+                        setPdfLoading(true);
+                        try {
+                          await exportReportPDF(
+                            report.patient, report.ev, TESTS[report.ev.testId],
+                            report.text, report.semaforo, report.nextActions,
+                            reportStatus[report.ev.id]||"generado", professionalName
+                          );
+                        } finally { setPdfLoading(false); }
+                      }}
+                      style={{
+                        width:"100%",background:pdfLoading?"#1e293b":"#7c3aed",
+                        color:pdfLoading?"#475569":"#fff",border:"none",borderRadius:10,
+                        padding:"12px",fontSize:14,fontWeight:700,cursor:pdfLoading?"not-allowed":"pointer",
+                        fontFamily:"inherit",display:"flex",alignItems:"center",justifyContent:"center",gap:8
+                      }}>
+                      {pdfLoading ? "Generando PDF…" : "⬇ Descargar informe PDF"}
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -854,9 +1178,13 @@ export default function App() {
             <div style={S.card}>
               {patients.flatMap(p=>p.evaluations.map(e=>({...e,patient:p}))).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6).map(e=>{
                 const td=TESTS[e.testId]; const sr=td.score(e.total);
+                const prevEv=e.patient.evaluations.filter(x=>x.testId===e.testId&&x.id!==e.id).sort((a,b)=>a.date.localeCompare(b.date));
+                const prev=prevEv.length>0?prevEv[prevEv.length-1]:null;
+                const sem=getSemaforo(e.testId,e.total,prev?.total??null,e.answers);
                 return (
                   <div key={e.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 0",borderBottom:"1px solid #1e293b"}}>
-                    <div style={{display:"flex",alignItems:"center",gap:14}}>
+                    <div style={{display:"flex",alignItems:"center",gap:12}}>
+                      <span style={{fontSize:16}}>{sem.emoji}</span>
                       <TestTag test={td}/>
                       <div>
                         <p style={{margin:0,fontSize:13,color:"#e2e8f0"}}>{e.patient.name}</p>
@@ -993,20 +1321,28 @@ export default function App() {
                     <p style={{color:"#475569",fontSize:14}}>Sin evaluaciones todavía. Asigná un test arriba.</p>
                   </div>
                 ) : (
-                  [...currentPatient.evaluations].sort((a,b)=>b.date.localeCompare(a.date)).map(ev=>{
+                  [...currentPatient.evaluations].sort((a,b)=>b.date.localeCompare(a.date)).map((ev,idx,arr)=>{
                     const td=TESTS[ev.testId]; const sr=td.score(ev.total);
+                    const prevEvalsSorted=arr.filter(e=>e.testId===ev.testId&&e.id!==ev.id).sort((a,b)=>a.date.localeCompare(b.date));
+                    const prevEval=prevEvalsSorted.length>0?prevEvalsSorted[prevEvalsSorted.length-1]:null;
+                    const sem=getSemaforo(ev.testId,ev.total,prevEval?.total??null,ev.answers);
+                    const status=reportStatus[ev.id];
                     return (
-                      <div key={ev.id} style={{...S.card,marginBottom:14}}>
+                      <div key={ev.id} style={{...S.card,marginBottom:14,borderColor:sem.color+"33",borderLeftWidth:3,borderLeftColor:sem.color}}>
                         <div style={{display:"flex",justifyContent:"space-between",alignItems:"start",flexWrap:"wrap",gap:10}}>
-                          <div style={{display:"flex",alignItems:"center",gap:10}}>
+                          <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
                             <TestTag test={td}/>
                             <span style={{color:"#475569",fontSize:12}}>{ev.date}</span>
+                            <span style={{fontSize:16}} title={sem.desc}>{sem.emoji}</span>
+                            {sem.worsening && <span style={{background:"#f97316"+"22",color:"#f97316",border:"1px solid #f9731644",borderRadius:6,padding:"1px 8px",fontSize:11,fontWeight:700}}>↑ Empeoramiento</span>}
+                            {status && status!=="generado" && <span style={{background:"#22c55e22",color:"#22c55e",border:"1px solid #22c55e44",borderRadius:6,padding:"1px 8px",fontSize:11,fontWeight:700}}>{status.charAt(0).toUpperCase()+status.slice(1)}</span>}
                           </div>
                           <button style={{...S.btn("#7c3aed"),fontSize:12}} onClick={()=>handleGenerateReport(currentPatient,ev)}>
                             ✦ Informe IA
                           </button>
                         </div>
                         <ScoreMeter total={ev.total} max={td.maxScore} sr={sr}/>
+                        {sem.color==="#ef4444" && <div style={{background:"#ef444418",border:"1px solid #ef444444",borderRadius:8,padding:"8px 12px",marginTop:8}}><p style={{margin:0,fontSize:12,color:"#ef4444",fontWeight:600}}>{sem.desc}</p></div>}
                       </div>
                     );
                   })
