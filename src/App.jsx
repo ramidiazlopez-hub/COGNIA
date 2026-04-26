@@ -778,9 +778,23 @@ export default function App() {
       {/* ── SIDEBAR ── */}
       <div style={S.sidebar}>
         <div style={{marginBottom:28}}>
-          <div style={{width:34,height:34,borderRadius:9,background:"linear-gradient(135deg,#3b82f6,#8b5cf6)",marginBottom:10}}/>
-          <p style={{fontSize:10,fontWeight:700,letterSpacing:2,color:"#475569",textTransform:"uppercase",margin:0}}>EcoMarkú</p>
-          <p style={{fontSize:13,fontWeight:600,color:"#94a3b8",margin:"2px 0 0"}}>Evaluaciones</p>
+          <svg viewBox="0 0 200 54" width="170" style={{display:"block",marginBottom:4}}>
+            <line x1="22" y1="8"  x2="36" y2="32" stroke="#AFA9EC" strokeWidth="0.8" opacity="0.6"/>
+            <line x1="22" y1="8"  x2="8"  y2="32" stroke="#AFA9EC" strokeWidth="0.8" opacity="0.6"/>
+            <line x1="8"  y1="32" x2="36" y2="32" stroke="#AFA9EC" strokeWidth="0.8" opacity="0.6"/>
+            <line x1="22" y1="8"  x2="22" y2="22" stroke="#AFA9EC" strokeWidth="0.8" opacity="0.35"/>
+            <line x1="8"  y1="32" x2="22" y2="22" stroke="#AFA9EC" strokeWidth="0.8" opacity="0.35"/>
+            <line x1="36" y1="32" x2="22" y2="22" stroke="#AFA9EC" strokeWidth="0.8" opacity="0.35"/>
+            <circle cx="22" cy="22" r="3.5" fill="#AFA9EC" opacity="0.25"/>
+            <circle cx="22" cy="22" r="2" fill="#7F77DD"/>
+            <circle cx="22" cy="8"  r="2" fill="#7F77DD"/>
+            <circle cx="8"  cy="32" r="2" fill="#7F77DD"/>
+            <circle cx="36" cy="32" r="2" fill="#7F77DD"/>
+            <circle cx="22" cy="20" r="13" fill="none" stroke="#7F77DD" strokeWidth="1" strokeDasharray="60 20" strokeDashoffset="-5" strokeLinecap="round"/>
+            <text x="50" y="34" fontFamily="system-ui,sans-serif" fontSize="26" fontWeight="700" letterSpacing="-0.5" fill="#ffffff">COGN</text>
+            <text x="146" y="34" fontFamily="system-ui,sans-serif" fontSize="26" fontWeight="700" letterSpacing="-0.5" fill="#AFA9EC">IA</text>
+          </svg>
+          <p style={{fontSize:10,fontWeight:600,letterSpacing:3,color:"#475569",textTransform:"uppercase",margin:0}}>salud mental</p>
         </div>
 
         {[{id:"dashboard",label:"Panel",icon:"◈"},{id:"tests",label:"Tests",icon:"◎"}].map(item=>(
