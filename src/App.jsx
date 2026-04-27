@@ -1,20 +1,12 @@
 import { useState } from "react";
 import SaludMental from "./SaludMental";
+import Laboral from "./Laboral";
 
 export default function App() {
   const [space, setSpace] = useState(null);
 
   if (space === "salud_mental") return <SaludMental onBack={() => setSpace(null)} />;
-  if (space === "laboral") return (
-    <div style={{minHeight:"100vh",background:"#070c18",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'DM Sans',sans-serif"}}>
-      <div style={{textAlign:"center",color:"#64748b"}}>
-        <p style={{fontSize:32,marginBottom:12}}>🏗</p>
-        <p style={{fontSize:18,color:"#94a3b8",marginBottom:8}}>Módulo Laboral</p>
-        <p style={{fontSize:14,marginBottom:24}}>En construcción — disponible próximamente</p>
-        <button onClick={()=>setSpace(null)} style={{background:"transparent",border:"1px solid #334155",borderRadius:9,padding:"9px 22px",color:"#64748b",cursor:"pointer",fontSize:13,fontFamily:"inherit"}}>← Volver</button>
-      </div>
-    </div>
-  );
+  if (space === "laboral") return <Laboral onBack={() => setSpace(null)} />;
 
   return (
     <div style={{minHeight:"100vh",background:"#070c18",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'DM Sans',sans-serif",padding:24}}>
@@ -47,29 +39,29 @@ export default function App() {
             <div style={{width:48,height:48,borderRadius:14,background:"#7F77DD22",border:"1px solid #7F77DD44",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:18,fontSize:22}}>🧠</div>
             <p style={{color:"#f1f5f9",fontSize:18,fontWeight:700,margin:"0 0 6px",fontFamily:"'DM Serif Display'"}}>Salud Mental</p>
             <p style={{color:"#64748b",fontSize:13,margin:"0 0 20px",lineHeight:1.5}}>Evaluaciones clínicas, seguimiento de pacientes e informes con IA</p>
-            <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+            <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:16}}>
               {["PHQ-9","GAD-7","PCL-5","BDI-II","AUDIT","ISI","+ 14 más"].map(t=>(
                 <span key={t} style={{background:"#7F77DD22",color:"#AFA9EC",border:"1px solid #7F77DD33",borderRadius:6,padding:"2px 8px",fontSize:11,fontWeight:600}}>{t}</span>
               ))}
             </div>
-            <div style={{marginTop:20,display:"flex",alignItems:"center",gap:6,color:"#7F77DD",fontSize:13,fontWeight:600}}>Ingresar →</div>
+            <div style={{display:"flex",alignItems:"center",gap:6,color:"#7F77DD",fontSize:13,fontWeight:600}}>Ingresar →</div>
           </button>
           <button onClick={()=>setSpace("laboral")} style={{background:"#0f172a",border:"1px solid #14B8A644",borderRadius:20,padding:32,cursor:"pointer",textAlign:"left",fontFamily:"inherit",transition:"all 0.2s"}}
             onMouseEnter={e=>{e.currentTarget.style.borderColor="#14B8A6";e.currentTarget.style.background="#041a18";}}
             onMouseLeave={e=>{e.currentTarget.style.borderColor="#14B8A644";e.currentTarget.style.background="#0f172a";}}>
             <div style={{width:48,height:48,borderRadius:14,background:"#14B8A622",border:"1px solid #14B8A644",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:18,fontSize:22}}>🏭</div>
             <p style={{color:"#f1f5f9",fontSize:18,fontWeight:700,margin:"0 0 6px",fontFamily:"'DM Serif Display'"}}>Medicina Laboral</p>
-            <p style={{color:"#64748b",fontSize:13,margin:"0 0 20px",lineHeight:1.5}}>Aptitud psicofísica, fatiga, cognición y riesgo laboral</p>
-            <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+            <p style={{color:"#64748b",fontSize:13,margin:"0 0 20px",lineHeight:1.5}}>Aptitud psicofísica, fatiga, cognición y riesgo laboral pre-turno</p>
+            <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:16}}>
               {["Stroop","Trail Making","PVT","Burnout","Estrés","Fatiga","+ más"].map(t=>(
                 <span key={t} style={{background:"#14B8A622",color:"#5DCAA5",border:"1px solid #14B8A633",borderRadius:6,padding:"2px 8px",fontSize:11,fontWeight:600}}>{t}</span>
               ))}
             </div>
-            <div style={{marginTop:20,display:"flex",alignItems:"center",gap:6,color:"#14B8A6",fontSize:13,fontWeight:600}}>Próximamente <span style={{fontSize:11,color:"#475569"}}>— En construcción</span></div>
+            <div style={{display:"flex",alignItems:"center",gap:6,color:"#14B8A6",fontSize:13,fontWeight:600}}>Ingresar →</div>
           </button>
         </div>
         <div style={{marginTop:24,background:"#0f172a",border:"1px solid #1e293b",borderRadius:14,padding:"16px 24px",display:"flex",justifyContent:"space-around",alignItems:"center"}}>
-          {[{label:"Tests disponibles",value:"20+"},{label:"Categorías clínicas",value:"12"},{label:"Informes con IA",value:"✦"},{label:"Firma profesional",value:"✓"}].map(s=>(
+          {[{label:"Tests disponibles",value:"32+"},{label:"Módulos",value:"2"},{label:"Informes con IA",value:"✦"},{label:"Firma profesional",value:"✓"}].map(s=>(
             <div key={s.label} style={{textAlign:"center"}}>
               <p style={{color:"#AFA9EC",fontWeight:700,fontSize:18,margin:"0 0 2px"}}>{s.value}</p>
               <p style={{color:"#475569",fontSize:11,margin:0}}>{s.label}</p>
