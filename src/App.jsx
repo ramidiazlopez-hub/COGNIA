@@ -117,8 +117,7 @@ async function exportReportPDF(patient, ev, testDef, reportText, semaforo, nextA
 
   // Report text
   const cleanText = (reportText || "").replace(/\*\*/g,"").replace(/###/g,"").replace(/##/g,"");
-  const sections = cleanText.split("
-").filter(l=>l.trim());
+  const sections = cleanText.split("\n").filter(l=>l.trim());
   sections.forEach(line => {
     if(y > 265) { doc.addPage(); y = 20; }
     const isHeading = /^\d+\./.test(line.trim()) || line.trim().endsWith(":");
