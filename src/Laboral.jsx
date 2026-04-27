@@ -671,20 +671,25 @@ export default function Laboral({onBack, professional, supabase}){
   const [dbLoading,setDbLoading]=useState(true);
 
   useEffect(()=>{
-    if(!supabase||!professional) return;
+    if(!supabase||!professional){setDbLoading(false);return;}
+    let mounted=true;
     const load=async()=>{
       setDbLoading(true);
-      const {data:ws}=await supabase.from("workers").select("*").eq("professional_id",professional.id).order("created_at",{ascending:false});
-      if(ws){
-        const wsWithEvals=await Promise.all(ws.map(async w=>{
-          const {data:evals}=await supabase.from("labor_evaluations").select("*").eq("worker_id",w.id).order("date",{ascending:false});
-          return {...w,evaluations:(evals||[]).map(e=>({...e,tests:e.tests||{}}))};
-        }));
-        setWorkers(wsWithEvals);
-      }
-      setDbLoading(false);
+      try{
+        const {data:ws}=await supabase.from("workers").select("*").eq("professional_id",professional.id).order("created_at",{ascending:false});
+        if(!mounted) return;
+        if(ws&&ws.length>0){
+          const wsWithEvals=await Promise.all(ws.map(async w=>{
+            const {data:evals}=await supabase.from("labor_evaluations").select("*").eq("worker_id",w.id).order("date",{ascending:false});
+            return {...w,evaluations:(evals||[]).map(e=>({...e,tests:e.tests||{}}))};
+          }));
+          if(mounted) setWorkers(wsWithEvals);
+        }
+      } catch(err){console.error("Load error:",err);}
+      if(mounted) setDbLoading(false);
     };
     load();
+    return ()=>{mounted=false;};
   },[professional]);
   const [view,setView]=useState("dashboard");
   const [selectedWorkerId,setSelectedWorkerId]=useState(null);
