@@ -666,8 +666,26 @@ function WorkerTestSession({worker, selectedTests, onComplete}){
 }
 
 // ─── MAIN MODULE ──────────────────────────────────────────────────────────────
-export default function Laboral({onBack}){
-  const [workers,setWorkers]=useState(MOCK_WORKERS);
+export default function Laboral({onBack, professional, supabase}){
+  const [workers,setWorkers]=useState([]);
+  const [dbLoading,setDbLoading]=useState(true);
+
+  useEffect(()=>{
+    if(!supabase||!professional) return;
+    const load=async()=>{
+      setDbLoading(true);
+      const {data:ws}=await supabase.from("workers").select("*").eq("professional_id",professional.id).order("created_at",{ascending:false});
+      if(ws){
+        const wsWithEvals=await Promise.all(ws.map(async w=>{
+          const {data:evals}=await supabase.from("labor_evaluations").select("*").eq("worker_id",w.id).order("date",{ascending:false});
+          return {...w,evaluations:(evals||[]).map(e=>({...e,tests:e.tests||{}}))};
+        }));
+        setWorkers(wsWithEvals);
+      }
+      setDbLoading(false);
+    };
+    load();
+  },[professional]);
   const [view,setView]=useState("dashboard");
   const [selectedWorkerId,setSelectedWorkerId]=useState(null);
   const [showNewWorker,setShowNewWorker]=useState(false);
@@ -678,7 +696,7 @@ export default function Laboral({onBack}){
   const [report,setReport]=useState(null);
   const [reportLoading,setReportLoading]=useState(false);
   const [pdfLoading,setPdfLoading]=useState(false);
-  const [profProfile,setProfProfile]=useState({tipo:"Médico/a Laboral",nombre:"Dr. Rami Díaz López",matricula:"MP 12345"});
+  const [profProfile,setProfProfile]=useState({tipo:professional?.especialidad||"Médico/a Laboral",nombre:professional?(professional.nombre+" "+professional.apellido):"",matricula:professional?.matricula||""});
   const profName = profProfile.nombre ? `${profProfile.tipo} ${profProfile.nombre}${profProfile.matricula?" — Mat. "+profProfile.matricula:""}` : "";
   const [showProfModal,setShowProfModal]=useState(false);
   const [reportStatus,setReportStatus]=useState({});
@@ -686,9 +704,17 @@ export default function Laboral({onBack}){
 
   const currentWorker=selectedWorkerId?workers.find(w=>w.id===selectedWorkerId):null;
 
-  const handleSessionComplete=(workerId,tests,results)=>{
+  const handleSessionComplete=async(workerId,tests,results)=>{
     const today=new Date().toISOString().slice(0,10);
-    const newEval={id:"ev"+Date.now(),date:today,tests:results};
+    const final=calcFinalAptitud(results);
+    let newEval={id:"ev"+Date.now(),date:today,tests:results};
+    if(supabase&&professional){
+      const {data}=await supabase.from("labor_evaluations").insert({
+        worker_id:workerId,professional_id:professional.id,
+        date:today,tests:results,final_aptitud:final
+      }).select().single();
+      if(data) newEval={...data,tests:data.tests||results};
+    }
     setWorkers(prev=>prev.map(w=>w.id===workerId?{...w,evaluations:[...w.evaluations,newEval]}:w));
     setSimulatingSession(null);setView("worker");
   };
@@ -710,9 +736,16 @@ export default function Laboral({onBack}){
     }catch{setReport(r=>({...r,loading:false,text:"Error al generar el informe."}));}
   };
 
-  const handleAddWorker=()=>{
+  const handleAddWorker=async()=>{
     if(!newForm.name) return;
-    setWorkers(prev=>[...prev,{id:"w"+Date.now(),...newForm,evaluations:[]}]);
+    if(supabase&&professional){
+      const {data}=await supabase.from("workers").insert({
+        professional_id:professional.id,...newForm
+      }).select().single();
+      if(data) setWorkers(prev=>[{...data,evaluations:[]},...prev]);
+    } else {
+      setWorkers(prev=>[...prev,{id:"w"+Date.now(),...newForm,evaluations:[]}]);
+    }
     setNewForm({name:"",dni:"",empresa:"",puesto:"",turno:"",legajo:"",whatsapp:""});
     setShowNewWorker(false);
   };
@@ -931,6 +964,8 @@ export default function Laboral({onBack}){
           </div>
         </div>
       )}
+
+      {dbLoading&&<div style={{position:"fixed",inset:0,background:"#070c18cc",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500}}><div style={{width:36,height:36,borderRadius:"50%",border:"3px solid #1e293b",borderTopColor:"#14B8A6",animation:"spin 1s linear infinite"}}/></div>}
 
       {/* SIDEBAR */}
       <div style={S.sidebar}>
