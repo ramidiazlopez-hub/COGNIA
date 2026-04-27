@@ -440,7 +440,9 @@ export default function SaludMental({onBack}){
   const [searchTest,setSearchTest]=useState("");
   const [assignDropdownOpen,setAssignDropdownOpen]=useState(false);
   const [reportStatus,setReportStatus]=useState({});
-  const [profName,setProfName]=useState(professionals[0]?.name||"");
+  const [profProfile,setProfProfile]=useState({tipo:"Psiquiatra",nombre:professionals[0]?.name||"",matricula:professionals[0]?.matricula||""});
+  const profName = profProfile.nombre ? `${profProfile.tipo} ${profProfile.nombre}${profProfile.matricula?" — Mat. "+profProfile.matricula:""}` : "";
+  const [showProfModal,setShowProfModal]=useState(false);
   const [pdfLoading,setPdfLoading]=useState(false);
   const [scheduledTests,setScheduledTests]=useState({});
 
@@ -565,9 +567,12 @@ export default function SaludMental({onBack}){
                         return(<button key={s.id} onClick={()=>setReportStatus(prev=>({...prev,[report.ev.id]:s.id}))} style={{background:active?s.color+"33":"transparent",border:`1px solid ${active?s.color:"#334155"}`,borderRadius:8,padding:"6px 14px",color:active?s.color:"#64748b",cursor:"pointer",fontSize:12,fontFamily:"inherit",fontWeight:active?700:400}}>{s.label}</button>);
                       })}
                     </div>
-                    <div style={{marginBottom:12}}>
-                      <p style={{...S.label,margin:"0 0 6px"}}>Nombre del profesional</p>
-                      <input placeholder="Dr./Dra. Nombre Apellido — Matrícula" value={profName} onChange={e=>setProfName(e.target.value)} style={S.input}/>
+                    <div style={{marginBottom:12,background:"#070c18",borderRadius:9,padding:"10px 14px",border:"1px solid #334155",display:"flex",alignItems:"center",justifyContent:"space-between",gap:10}}>
+                      <div>
+                        <p style={{...S.label,margin:"0 0 3px"}}>Profesional firmante</p>
+                        {profName?<p style={{margin:0,fontSize:13,color:"#e2e8f0"}}>{profName}</p>:<p style={{margin:0,fontSize:13,color:"#475569",fontStyle:"italic"}}>Sin profesional cargado</p>}
+                      </div>
+                      <button onClick={()=>setShowProfModal(true)} style={{...S.ghost,flexShrink:0,fontSize:11}}>Editar</button>
                     </div>
                     {reportStatus[report.ev.id]==="firmado"&&<p style={{fontSize:11,color:"#22c55e",marginBottom:10}}>✓ Firmado — {profName||"profesional"} · {new Date().toLocaleDateString("es-AR")}</p>}
                     <button disabled={pdfLoading||!report.text} onClick={async()=>{setPdfLoading(true);try{await exportPDF(report.patient,report.ev,TESTS[report.ev.testId],report.text,report.semaforo,report.nextActions,reportStatus[report.ev.id]||"generado",profName);}finally{setPdfLoading(false);}}} style={{width:"100%",background:pdfLoading?"#1e293b":"#7c3aed",color:pdfLoading?"#475569":"#fff",border:"none",borderRadius:10,padding:"12px",fontSize:14,fontWeight:700,cursor:pdfLoading?"not-allowed":"pointer",fontFamily:"inherit"}}>
@@ -594,6 +599,42 @@ export default function SaludMental({onBack}){
             <div style={{display:"flex",gap:8,marginTop:18}}>
               <button style={{...S.ghost,flex:1}} onClick={()=>setShowNewPatient(false)}>Cancelar</button>
               <button style={{...S.btn(),flex:1}} onClick={handleAddPatient}>Agregar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PROFESSIONAL PROFILE MODAL */}
+      {showProfModal&&(
+        <div style={{position:"fixed",inset:0,background:"#000a",display:"flex",alignItems:"center",justifyContent:"center",zIndex:300}}>
+          <div style={{...S.card,maxWidth:400,width:"90%",animation:"fadeIn 0.2s ease"}}>
+            <h3 style={{color:"#f1f5f9",margin:"0 0 4px",fontFamily:"'DM Serif Display'"}}>Perfil del profesional</h3>
+            <p style={{color:"#64748b",fontSize:13,marginBottom:20}}>Estos datos aparecerán en todos los informes firmados.</p>
+            <div style={{marginBottom:12}}>
+              <p style={{...S.label,marginBottom:6}}>Especialidad</p>
+              <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                {["Psiquiatra","Psicólogo/a","Médico/a","Neuropsicólogo/a","Otro"].map(t=>(
+                  <button key={t} onClick={()=>setProfProfile(p=>({...p,tipo:t}))} style={{background:profProfile.tipo===t?"#7c3aed33":"transparent",border:`1px solid ${profProfile.tipo===t?"#7c3aed":"#334155"}`,borderRadius:8,padding:"6px 14px",color:profProfile.tipo===t?"#AFA9EC":"#64748b",cursor:"pointer",fontSize:12,fontFamily:"inherit"}}>{t}</button>
+                ))}
+              </div>
+            </div>
+            <div style={{marginBottom:12}}>
+              <p style={{...S.label,marginBottom:6}}>Nombre y apellido</p>
+              <input placeholder="Ej: María García" value={profProfile.nombre} onChange={e=>setProfProfile(p=>({...p,nombre:e.target.value}))} style={S.input}/>
+            </div>
+            <div style={{marginBottom:20}}>
+              <p style={{...S.label,marginBottom:6}}>Matrícula</p>
+              <input placeholder="Ej: MP 12345 o MN 67890" value={profProfile.matricula} onChange={e=>setProfProfile(p=>({...p,matricula:e.target.value}))} style={S.input}/>
+            </div>
+            {profProfile.nombre&&(
+              <div style={{background:"#070c18",borderRadius:9,padding:"10px 14px",border:"1px solid #334155",marginBottom:16}}>
+                <p style={{...S.label,margin:"0 0 4px"}}>Vista previa en informe</p>
+                <p style={{margin:0,fontSize:13,color:"#e2e8f0"}}>{profProfile.tipo} {profProfile.nombre}{profProfile.matricula?" — Mat. "+profProfile.matricula:""}</p>
+              </div>
+            )}
+            <div style={{display:"flex",gap:8}}>
+              <button style={{...S.ghost,flex:1}} onClick={()=>setShowProfModal(false)}>Cancelar</button>
+              <button style={{...S.btn("#7c3aed"),flex:1}} onClick={()=>setShowProfModal(false)}>Guardar</button>
             </div>
           </div>
         </div>
@@ -634,6 +675,14 @@ export default function SaludMental({onBack}){
           </button>
         ))}
         <button onClick={()=>setShowNewPatient(true)} style={{background:"transparent",border:"1px dashed #334155",borderRadius:9,padding:"7px 12px",color:"#475569",cursor:"pointer",textAlign:"left",fontSize:12,fontFamily:"inherit",marginTop:6,width:"100%"}}>+ Nuevo paciente</button>
+        <div style={{marginTop:"auto",paddingTop:20,borderTop:"1px solid #1e293b"}}>
+          <button onClick={()=>setShowProfModal(true)} style={{width:"100%",background:"transparent",border:"1px solid #334155",borderRadius:9,padding:"10px 12px",cursor:"pointer",textAlign:"left",fontFamily:"inherit",display:"flex",alignItems:"center",gap:8}}>
+            <div style={{width:28,height:28,borderRadius:"50%",background:"#7c3aed22",border:"1px solid #7c3aed44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,flexShrink:0}}>👤</div>
+            <div style={{overflow:"hidden"}}>
+              {profProfile.nombre?<><p style={{margin:0,fontSize:11,fontWeight:600,color:"#e2e8f0",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{profProfile.nombre}</p><p style={{margin:0,fontSize:10,color:"#7c3aed"}}>{profProfile.tipo}</p></>:<p style={{margin:0,fontSize:11,color:"#475569"}}>Cargar perfil profesional</p>}
+            </div>
+          </button>
+        </div>
       </div>
 
       {/* MAIN */}
