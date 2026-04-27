@@ -206,29 +206,32 @@ export default function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      if (session) {
-        const { data: prof } = await supabase.from("professionals").select("*").eq("id", session.user.id).single();
-        setProfessional(prof);
-      }
-      setLoading(false);
-    });
+    let mounted = true;
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    // Use onAuthStateChange as primary source of truth
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
       setSession(session);
       if (session) {
         const { data: prof } = await supabase.from("professionals").select("*").eq("id", session.user.id).single();
-        setProfessional(prof);
+        if (mounted) setProfessional(prof);
       } else {
         setProfessional(null);
         setSpace(null);
       }
+      if (mounted) setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    // Timeout fallback — if no auth event in 4s, stop loading
+    const timeout = setTimeout(() => {
+      if (mounted) setLoading(false);
+    }, 4000);
+
+    return () => {
+      mounted = false;
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleLogout = async () => {
