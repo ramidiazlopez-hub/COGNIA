@@ -430,21 +430,25 @@ export default function SaludMental({onBack, professional, supabase}){
 
   // Load patients from Supabase
   useEffect(()=>{
-    if(!supabase||!professional) return;
+    if(!supabase||!professional){setDbLoading(false);return;}
+    let mounted=true;
     const loadPatients=async()=>{
       setDbLoading(true);
-      const {data:pats}=await supabase.from("patients").select("*").eq("professional_id",professional.id).order("created_at",{ascending:false});
-      if(pats){
-        // Load evaluations for each patient
-        const patsWithEvals=await Promise.all(pats.map(async p=>{
-          const {data:evals}=await supabase.from("evaluations").select("*").eq("patient_id",p.id).order("date",{ascending:true});
-          return {...p,evaluations:(evals||[]).map(e=>({...e,answers:e.answers||[]}))};
-        }));
-        setPatients(patsWithEvals);
-      }
-      setDbLoading(false);
+      try{
+        const {data:pats}=await supabase.from("patients").select("*").eq("professional_id",professional.id).order("created_at",{ascending:false});
+        if(!mounted) return;
+        if(pats&&pats.length>0){
+          const patsWithEvals=await Promise.all(pats.map(async p=>{
+            const {data:evals}=await supabase.from("evaluations").select("*").eq("patient_id",p.id).order("date",{ascending:true});
+            return {...p,age:p.dob?Math.floor((new Date()-new Date(p.dob))/31557600000):0,evaluations:(evals||[]).map(e=>({...e,testId:e.test_id,answers:e.answers||[]}))};
+          }));
+          if(mounted) setPatients(patsWithEvals);
+        }
+      } catch(err){console.error("Load error:",err);}
+      if(mounted) setDbLoading(false);
     };
     loadPatients();
+    return ()=>{mounted=false;};
   },[professional]);
   const [professionals]=useState(MOCK_PROFESSIONALS);
   const [view,setView]=useState("dashboard");
