@@ -424,8 +424,28 @@ function PatientTestView({testId,patientName,onComplete}){
 }
 
 // ─── MAIN MODULE ──────────────────────────────────────────────────────────────
-export default function SaludMental({onBack}){
-  const [patients,setPatients]=useState(MOCK_PATIENTS);
+export default function SaludMental({onBack, professional, supabase}){
+  const [patients,setPatients]=useState([]);
+  const [dbLoading,setDbLoading]=useState(true);
+
+  // Load patients from Supabase
+  useEffect(()=>{
+    if(!supabase||!professional) return;
+    const loadPatients=async()=>{
+      setDbLoading(true);
+      const {data:pats}=await supabase.from("patients").select("*").eq("professional_id",professional.id).order("created_at",{ascending:false});
+      if(pats){
+        // Load evaluations for each patient
+        const patsWithEvals=await Promise.all(pats.map(async p=>{
+          const {data:evals}=await supabase.from("evaluations").select("*").eq("patient_id",p.id).order("date",{ascending:true});
+          return {...p,evaluations:(evals||[]).map(e=>({...e,answers:e.answers||[]}))};
+        }));
+        setPatients(patsWithEvals);
+      }
+      setDbLoading(false);
+    };
+    loadPatients();
+  },[professional]);
   const [professionals]=useState(MOCK_PROFESSIONALS);
   const [view,setView]=useState("dashboard");
   const [selectedPatientId,setSelectedPatientId]=useState(null);
@@ -440,7 +460,7 @@ export default function SaludMental({onBack}){
   const [searchTest,setSearchTest]=useState("");
   const [assignDropdownOpen,setAssignDropdownOpen]=useState(false);
   const [reportStatus,setReportStatus]=useState({});
-  const [profProfile,setProfProfile]=useState({tipo:"Psiquiatra",nombre:professionals[0]?.name||"",matricula:professionals[0]?.matricula||""});
+  const [profProfile,setProfProfile]=useState({tipo:professional?.especialidad||"Psiquiatra",nombre:professional?(professional.nombre+" "+professional.apellido):"",matricula:professional?.matricula||""});
   const profName = profProfile.nombre ? `${profProfile.tipo} ${profProfile.nombre}${profProfile.matricula?" — Mat. "+profProfile.matricula:""}` : "";
   const [showProfModal,setShowProfModal]=useState(false);
   const [pdfLoading,setPdfLoading]=useState(false);
@@ -448,9 +468,19 @@ export default function SaludMental({onBack}){
 
   const currentPatient=selectedPatientId?patients.find(p=>p.id===selectedPatientId):null;
 
-  const handleCompleteTest=(patientId,testId,answers,total)=>{
+  const handleCompleteTest=async(patientId,testId,answers,total)=>{
     const today=new Date().toISOString().slice(0,10);
-    const newEval={id:"e"+Date.now(),testId,date:today,answers,total};
+    const prevEvals=patients.find(p=>p.id===patientId)?.evaluations.filter(e=>e.testId===testId).sort((a,b)=>a.date.localeCompare(b.date))||[];
+    const prev=prevEvals.length>0?prevEvals[prevEvals.length-1]:null;
+    const sem=getSemaforo(testId,total,prev?.total??null,answers);
+    let newEval={id:"e"+Date.now(),testId,date:today,answers,total};
+    if(supabase&&professional){
+      const {data}=await supabase.from("evaluations").insert({
+        patient_id:patientId,professional_id:professional.id,
+        test_id:testId,date:today,answers:answers,total,aptitud:sem.label
+      }).select().single();
+      if(data) newEval={...data,testId:data.test_id,answers:data.answers||answers};
+    }
     setPatients(prev=>prev.map(p=>p.id===patientId?{...p,evaluations:[...p.evaluations,newEval]}:p));
     setSimulatingTest(null);setView("patient");
   };
@@ -469,10 +499,20 @@ export default function SaludMental({onBack}){
     }catch{setReport(r=>({...r,loading:false,text:"Error al generar el informe."}));}
   };
 
-  const handleAddPatient=()=>{
+  const handleAddPatient=async()=>{
     if(!newForm.name) return;
-    const p={id:"p"+Date.now(),...newForm,age:newForm.dob?Math.floor((new Date()-new Date(newForm.dob))/31557600000):parseInt(newForm.age)||0,evaluations:[]};
-    setPatients(prev=>[...prev,p]);setNewForm({name:"",age:"",dob:"",email:"",whatsapp:""});setShowNewPatient(false);
+    const age=newForm.dob?Math.floor((new Date()-new Date(newForm.dob))/31557600000):parseInt(newForm.age)||0;
+    if(supabase&&professional){
+      const {data,error}=await supabase.from("patients").insert({
+        professional_id:professional.id,name:newForm.name,
+        dob:newForm.dob||null,email:newForm.email,whatsapp:newForm.whatsapp
+      }).select().single();
+      if(data) setPatients(prev=>[{...data,age,evaluations:[]},...prev]);
+    } else {
+      const p={id:"p"+Date.now(),...newForm,age,evaluations:[]};
+      setPatients(prev=>[...prev,p]);
+    }
+    setNewForm({name:"",age:"",dob:"",email:"",whatsapp:""});setShowNewPatient(false);
   };
 
   if(simulatingTest) return <PatientTestView testId={simulatingTest.testId} patientName={simulatingTest.patientName} onComplete={(a,t)=>handleCompleteTest(simulatingTest.patientId,simulatingTest.testId,a,t)}/>;
@@ -687,6 +727,9 @@ export default function SaludMental({onBack}){
 
       {/* MAIN */}
       <div style={S.main}>
+
+        {/* LOADING */}
+        {dbLoading&&<div style={{position:"fixed",inset:0,background:"#070c18cc",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500}}><div style={{width:36,height:36,borderRadius:"50%",border:"3px solid #1e293b",borderTopColor:"#7c3aed",animation:"spin 1s linear infinite"}}/></div>}
 
         {/* DASHBOARD */}
         {view==="dashboard"&&(
