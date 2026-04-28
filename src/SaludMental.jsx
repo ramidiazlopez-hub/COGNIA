@@ -290,7 +290,7 @@ ${suicideAlert?"ALERTA URGENTE: Presencia de ideación suicida.":""}
 Incluir: 1. Resumen ejecutivo (2-3 oraciones) 2. Interpretación clínica 3. ${sem.worsening?"Análisis del empeoramiento":"Áreas de atención prioritaria"} 4. 3-4 líneas terapéuticas basadas en evidencia 5. Próximas acciones sugeridas: ${next.join("; ")} (aclarar que requieren validación profesional)
 
 Tono clínico, empático, basado en evidencia. Máximo 420 palabras.`;
-  const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":import.meta.env.VITE_ANTHROPIC_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-allow-browser":"true"},body:JSON.stringify({model:"claude-sonnet-4-5-20251001",max_tokens:1200,messages:[{role:"user",content:prompt}]})});
+  const r=await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-5-20251001",max_tokens:1200,messages:[{role:"user",content:prompt}]})});
   const data=await r.json();
   return {text:data.content?.[0]?.text||"No se pudo generar el informe.",semaforo:sem,nextActions:next};
 }
