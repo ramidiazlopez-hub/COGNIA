@@ -559,7 +559,7 @@ El informe debe incluir:
 
 Tono médico-laboral formal. Aclará que es orientativo y requiere validación profesional. Máximo 350 palabras.`;
 
-  const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":"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","anthropic-version":"2023-06-01","anthropic-dangerous-allow-browser":"true"},body:JSON.stringify({model:"claude-sonnet-4-5-20251001",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
+  const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":import.meta.env.VITE_ANTHROPIC_KEY,"anthropic-version":"2023-06-01","anthropic-dangerous-allow-browser":"true"},body:JSON.stringify({model:"claude-sonnet-4-5-20251001",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
   const data=await r.json();
   return data.content?.[0]?.text||"No se pudo generar el informe.";
 }
