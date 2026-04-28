@@ -559,7 +559,7 @@ El informe debe incluir:
 
 Tono médico-laboral formal. Aclará que es orientativo y requiere validación profesional. Máximo 350 palabras.`;
 
-  const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
+  const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":"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","anthropic-version":"2023-06-01","anthropic-dangerous-allow-browser":"true"},body:JSON.stringify({model:"claude-sonnet-4-5-20251001",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
   const data=await r.json();
   return data.content?.[0]?.text||"No se pudo generar el informe.";
 }
@@ -633,7 +633,7 @@ function WorkerTestSession({worker, selectedTests, onComplete}){
                 <p style={{color:"#e2e8f0",fontSize:14,margin:"0 0 12px",lineHeight:1.5}}><span style={{color:TEAL,fontWeight:700,marginRight:8}}>{qi+1}.</span>{q}</p>
                 <div style={{display:"flex",flexDirection:"column",gap:6}}>
                   {td.options.map((opt,oi)=>(
-                    <button key={oi} onClick={()=>{const n=[...currentAnswers];n[qi]=opt.value;setCurrentAnswers(n);}} style={{background:currentAnswers[qi]===opt.value&&currentAnswers[qi]!==undefined&&(oi===currentAnswers.indexOf(opt.value)||true)?TEAL+"33":"transparent",border:`1px solid ${currentAnswers[qi]!==undefined&&td.options[currentAnswers[qi]]===opt?TEAL:"#334155"}`,borderRadius:9,padding:"9px 14px",color:"#94a3b8",cursor:"pointer",textAlign:"left",fontSize:13,transition:"all 0.2s",fontFamily:"inherit"}}>
+                    <button key={oi} onClick={()=>{const n=[...currentAnswers];n[qi]=opt.value;setCurrentAnswers(n);}} style={{background:currentAnswers[qi]===opt.value?TEAL+"33":"transparent",border:`1px solid ${currentAnswers[qi]===opt.value?TEAL:"#334155"}`,borderRadius:9,padding:"9px 14px",color:currentAnswers[qi]===opt.value?"#f1f5f9":"#94a3b8",cursor:"pointer",textAlign:"left",fontSize:13,transition:"all 0.2s",fontFamily:"inherit"}}>
                       {opt.label}
                     </button>
                   ))}
