@@ -290,7 +290,7 @@ ${suicideAlert?"ALERTA URGENTE: Presencia de ideación suicida.":""}
 Incluir: 1. Resumen ejecutivo (2-3 oraciones) 2. Interpretación clínica 3. ${sem.worsening?"Análisis del empeoramiento":"Áreas de atención prioritaria"} 4. 3-4 líneas terapéuticas basadas en evidencia 5. Próximas acciones sugeridas: ${next.join("; ")} (aclarar que requieren validación profesional)
 
 Tono clínico, empático, basado en evidencia. Máximo 420 palabras.`;
-  const r=await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-5-20251001",max_tokens:1200,messages:[{role:"user",content:prompt}]})});
+  const r=await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-5",max_tokens:1200,messages:[{role:"user",content:prompt}]})});
   const data=await r.json();
   return {text:data.content?.[0]?.text||"No se pudo generar el informe.",semaforo:sem,nextActions:next};
 }
@@ -575,7 +575,7 @@ export default function SaludMental({onBack, professional, supabase}){
             <p style={{color:"#64748b",fontSize:13,marginBottom:14}}>Compartí este link con <strong style={{color:"#94a3b8"}}>{assignTest.patientName}</strong></p>
             <TestTag test={TESTS[assignTest.testId]}/>
             <div style={{background:"#070c18",borderRadius:9,padding:12,margin:"12px 0",border:"1px solid #334155",wordBreak:"break-all"}}>
-              <span style={{color:"#64748b",fontSize:11,fontFamily:"monospace"}}>https://cognia.itmed.com/test/{assignTest.testId}?pid={assignTest.patientId}&token=demo</span>
+              <span style={{color:"#64748b",fontSize:11,fontFamily:"monospace"}}>https://cogniia.com/test/{assignTest.testId}?pid={assignTest.patientId}&token=demo</span>
             </div>
             {/* Schedule next test */}
             <div style={{marginBottom:14}}>
@@ -585,7 +585,7 @@ export default function SaludMental({onBack, professional, supabase}){
             </div>
             <div style={{display:"flex",gap:8,marginBottom:10}}>
               {assignTest.patientWhatsapp&&(
-                <a href={`https://wa.me/${assignTest.patientWhatsapp.replace(/\D/g,"")}?text=Hola%2C%20te%20enviamos%20tu%20evaluación%20COGNIA%3A%20https%3A%2F%2Fcognia.itmed.com%2Ftest%2F${assignTest.testId}%3Fpid%3D${assignTest.patientId}%26token%3Ddemo`} target="_blank" rel="noopener noreferrer" style={{...S.btn("#25D366"),flex:1,fontSize:12,textDecoration:"none",textAlign:"center",display:"block",padding:"9px"}}>📱 WhatsApp</a>
+                <a href={`https://wa.me/${assignTest.patientWhatsapp.replace(/\D/g,"")}?text=Hola!%20Te%20comparto%20tu%20evaluaci%C3%B3n%20COGNIA%3A%20https%3A%2F%2Fcogniia.com%2Ftest%2F${assignTest.testId}%3Fpid%3D${assignTest.patientId}%26token%3Ddemo`} target="_blank" rel="noopener noreferrer" style={{...S.btn("#25D366"),flex:1,fontSize:12,textDecoration:"none",textAlign:"center",display:"block",padding:"9px"}}>📱 WhatsApp</a>
               )}
               <button style={{...S.btn("#3b82f6"),flex:1,fontSize:12}} onClick={()=>{setLinkCopied(true);setTimeout(()=>setLinkCopied(false),2000);}}>✉️ Email</button>
             </div>
