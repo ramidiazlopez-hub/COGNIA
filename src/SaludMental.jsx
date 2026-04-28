@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const CATEGORIES = {
   depresion:    { label:"Depresión",             color:"#4A90D9" },
