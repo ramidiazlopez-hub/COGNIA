@@ -5,30 +5,74 @@ import Laboral from "./Laboral";
 
 // ─── AUTH SCREEN ──────────────────────────────────────────────────────────────
 function AuthScreen({ onAuth }) {
-  const [mode, setMode] = useState("login"); // login | register
-  const [form, setForm] = useState({ email:"", password:"", nombre:"", apellido:"", especialidad:"Psiquiatra", matricula:"" });
+  const [mode, setMode] = useState("login");
+  const [form, setForm] = useState({
+    email: "", password: "", nombre: "", apellido: "",
+    especialidad: "Psiquiatra", matricula: ""
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
   const handleLogin = async () => {
     setLoading(true); setError(null);
-    const { data, error } = await supabase.auth.signInWithPassword({ email: form.email, password: form.password });
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: form.email, password: form.password
+    });
     if (error) { setError(error.message); setLoading(false); return; }
-    const { data: prof } = await supabase.from("professionals").select("*").eq("id", data.user.id).single();
+
+    // FIX 1: buscar perfil con manejo de error
+    let prof = null;
+    try {
+      const { data: profData, error: profError } = await supabase
+        .from("professionals")
+        .select("*")
+        .eq("id", data.user.id)
+        .maybeSingle(); // maybeSingle no lanza error si no existe
+      if (!profError && profData) prof = profData;
+    } catch (e) {
+      console.warn("No se pudo cargar el perfil profesional:", e);
+    }
+
+    // FIX 2: si no existe el perfil, crearlo automáticamente
+    if (!prof) {
+      const defaultProf = {
+        id: data.user.id,
+        nombre: data.user.email.split("@")[0],
+        apellido: "",
+        especialidad: "Médico",
+        matricula: "",
+        email: data.user.email
+      };
+      const { data: newProf } = await supabase
+        .from("professionals")
+        .insert(defaultProf)
+        .select()
+        .single();
+      prof = newProf || defaultProf;
+    }
+
     onAuth(data.user, prof);
     setLoading(false);
   };
 
   const handleRegister = async () => {
-    if (!form.nombre || !form.apellido || !form.matricula) { setError("Completá todos los campos."); return; }
+    if (!form.nombre || !form.apellido || !form.matricula) {
+      setError("Completá todos los campos."); return;
+    }
     setLoading(true); setError(null);
-    const { data, error } = await supabase.auth.signUp({ email: form.email, password: form.password });
+    const { data, error } = await supabase.auth.signUp({
+      email: form.email, password: form.password
+    });
     if (error) { setError(error.message); setLoading(false); return; }
     if (data.user) {
-      await supabase.from("professionals").insert({
-        id: data.user.id, nombre: form.nombre, apellido: form.apellido,
-        especialidad: form.especialidad, matricula: form.matricula, email: form.email
+      await supabase.from("professionals").upsert({
+        id: data.user.id,
+        nombre: form.nombre,
+        apellido: form.apellido,
+        especialidad: form.especialidad,
+        matricula: form.matricula,
+        email: form.email
       });
       setSuccess("¡Registro exitoso! Revisá tu email para confirmar la cuenta, luego ingresá.");
       setMode("login");
@@ -37,220 +81,264 @@ function AuthScreen({ onAuth }) {
   };
 
   const S = {
-    input: { width:"100%", background:"#0a0f1e", border:"1px solid #334155", borderRadius:9, padding:"10px 14px", color:"#e2e8f0", fontSize:14, fontFamily:"inherit", boxSizing:"border-box", marginBottom:12 },
-    btn: (c="#7c3aed") => ({ width:"100%", background:loading?"#1e293b":c, color:loading?"#475569":"#fff", border:"none", borderRadius:10, padding:"12px", fontSize:15, fontWeight:700, cursor:loading?"not-allowed":"pointer", fontFamily:"inherit", marginTop:4 }),
+    input: {
+      width: "100%", background: "#0a0f1e", border: "1px solid #334155",
+      borderRadius: 9, padding: "10px 14px", color: "#e2e8f0", fontSize: 14,
+      fontFamily: "inherit", boxSizing: "border-box", marginBottom: 12
+    },
+    btn: (c = "#7c3aed") => ({
+      width: "100%", background: loading ? "#1e293b" : c, color: loading ? "#475569" : "#fff",
+      border: "none", borderRadius: 10, padding: "12px", fontSize: 15,
+      fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", marginBottom: 10
+    }),
+    label: { color: "#94a3b8", fontSize: 12, marginBottom: 4, display: "block" }
   };
 
   return (
-    <div style={{ minHeight:"100vh", background:"#070c18", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'DM Sans',sans-serif", padding:24 }}>
-      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet"/>
-      <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}} *{box-sizing:border-box}`}</style>
-
-      <div style={{ width:"100%", maxWidth:420, animation:"fadeIn 0.4s ease" }}>
-        {/* Logo */}
-        <div style={{ textAlign:"center", marginBottom:40 }}>
-          <svg viewBox="0 0 260 60" width="200" style={{ display:"inline-block", marginBottom:8 }}>
-            <line x1="28" y1="10" x2="44" y2="38" stroke="#AFA9EC" strokeWidth="1" opacity="0.6"/>
-            <line x1="28" y1="10" x2="12" y2="38" stroke="#AFA9EC" strokeWidth="1" opacity="0.6"/>
-            <line x1="12" y1="38" x2="44" y2="38" stroke="#AFA9EC" strokeWidth="1" opacity="0.6"/>
-            <line x1="28" y1="10" x2="28" y2="26" stroke="#AFA9EC" strokeWidth="1" opacity="0.35"/>
-            <line x1="12" y1="38" x2="28" y2="26" stroke="#AFA9EC" strokeWidth="1" opacity="0.35"/>
-            <line x1="44" y1="38" x2="28" y2="26" stroke="#AFA9EC" strokeWidth="1" opacity="0.35"/>
-            <circle cx="28" cy="26" r="4" fill="#AFA9EC" opacity="0.25"/>
-            <circle cx="28" cy="26" r="2.5" fill="#7F77DD"/>
-            <circle cx="28" cy="10" r="2.5" fill="#7F77DD"/>
-            <circle cx="12" cy="38" r="2.5" fill="#7F77DD"/>
-            <circle cx="44" cy="38" r="2.5" fill="#7F77DD"/>
-            <circle cx="28" cy="24" r="16" fill="none" stroke="#7F77DD" strokeWidth="1.2" strokeDasharray="72 24" strokeDashoffset="-6" strokeLinecap="round"/>
-            <text x="66" y="40" fontFamily="system-ui,sans-serif" fontSize="32" fontWeight="700" letterSpacing="-1" fill="#ffffff">COGN</text>
-            <text x="178" y="40" fontFamily="system-ui,sans-serif" fontSize="32" fontWeight="700" letterSpacing="-1" fill="#AFA9EC">IA</text>
-          </svg>
-          <p style={{ color:"#475569", fontSize:11, letterSpacing:4, textTransform:"uppercase", margin:0 }}>Plataforma de evaluaciones clínicas</p>
-        </div>
-
-        {/* Card */}
-        <div style={{ background:"#0f172a", border:"1px solid #1e293b", borderRadius:20, padding:32 }}>
-          {/* Tabs */}
-          <div style={{ display:"flex", gap:4, marginBottom:28, borderBottom:"1px solid #1e293b", paddingBottom:0 }}>
-            {[["login","Ingresar"],["register","Registrarse"]].map(([m,l])=>(
-              <button key={m} onClick={()=>{setMode(m);setError(null);setSuccess(null);}} style={{ background:"transparent", border:"none", borderBottom:`2px solid ${mode===m?"#7c3aed":"transparent"}`, color:mode===m?"#AFA9EC":"#475569", padding:"8px 20px", cursor:"pointer", fontSize:14, fontFamily:"inherit", fontWeight:mode===m?700:400, marginBottom:-1 }}>{l}</button>
-            ))}
+    <div style={{
+      minHeight: "100vh", background: "#060b18",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      fontFamily: "'Segoe UI', sans-serif"
+    }}>
+      <div style={{
+        background: "#0d1526", border: "1px solid #1e293b",
+        borderRadius: 18, padding: 40, width: 380, boxShadow: "0 20px 60px #000a"
+      }}>
+        <div style={{ textAlign: "center", marginBottom: 28 }}>
+          <div style={{ fontSize: 28, fontWeight: 800, color: "#e2e8f0", letterSpacing: -1 }}>
+            🧠 COGN<span style={{ color: "#7c3aed" }}>IA</span>
           </div>
-
-          {error && <div style={{ background:"#ef444422", border:"1px solid #ef444444", borderRadius:8, padding:"10px 14px", marginBottom:16 }}><p style={{ color:"#ef4444", fontSize:13, margin:0 }}>{error}</p></div>}
-          {success && <div style={{ background:"#22c55e22", border:"1px solid #22c55e44", borderRadius:8, padding:"10px 14px", marginBottom:16 }}><p style={{ color:"#22c55e", fontSize:13, margin:0 }}>{success}</p></div>}
-
-          {mode === "register" && (
-            <>
-              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:0 }}>
-                <input placeholder="Nombre" value={form.nombre} onChange={e=>setForm(p=>({...p,nombre:e.target.value}))} style={{...S.input,marginBottom:0}}/>
-                <input placeholder="Apellido" value={form.apellido} onChange={e=>setForm(p=>({...p,apellido:e.target.value}))} style={{...S.input,marginBottom:0}}/>
-              </div>
-              <div style={{ marginBottom:0 }}>
-                <p style={{ fontSize:10, fontWeight:700, letterSpacing:2, color:"#475569", textTransform:"uppercase", margin:"12px 0 8px" }}>Especialidad</p>
-                <div style={{ display:"flex", gap:6, flexWrap:"wrap", marginBottom:12 }}>
-                  {["Psiquiatra","Psicólogo/a","Médico/a","Médico/a Laboral","Neuropsicólogo/a"].map(t=>(
-                    <button key={t} onClick={()=>setForm(p=>({...p,especialidad:t}))} style={{ background:form.especialidad===t?"#7c3aed33":"transparent", border:`1px solid ${form.especialidad===t?"#7c3aed":"#334155"}`, borderRadius:8, padding:"5px 12px", color:form.especialidad===t?"#AFA9EC":"#64748b", cursor:"pointer", fontSize:12, fontFamily:"inherit" }}>{t}</button>
-                  ))}
-                </div>
-              </div>
-              <input placeholder="Matrícula (ej: MP 12345)" value={form.matricula} onChange={e=>setForm(p=>({...p,matricula:e.target.value}))} style={S.input}/>
-            </>
-          )}
-
-          <input type="email" placeholder="Email" value={form.email} onChange={e=>setForm(p=>({...p,email:e.target.value}))} style={S.input}/>
-          <input type="password" placeholder="Contraseña" value={form.password} onChange={e=>setForm(p=>({...p,password:e.target.value}))}
-            onKeyDown={e=>e.key==="Enter"&&(mode==="login"?handleLogin():handleRegister())}
-            style={S.input}/>
-
-          <button onClick={mode==="login"?handleLogin:handleRegister} disabled={loading} style={S.btn()}>
-            {loading ? "Procesando..." : mode==="login" ? "Ingresar →" : "Crear cuenta →"}
-          </button>
+          <div style={{ color: "#64748b", fontSize: 13, marginTop: 6 }}>
+            Plataforma de evaluaciones clínicas
+          </div>
         </div>
 
-        <p style={{ textAlign:"center", color:"#334155", fontSize:11, marginTop:20 }}>COGNIA · ITMED · Córdoba 844, Rosario</p>
+        <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
+          {["login", "register"].map(m => (
+            <button key={m} onClick={() => { setMode(m); setError(null); setSuccess(null); }} style={{
+              flex: 1, padding: "8px", borderRadius: 8, border: "none", fontSize: 13, fontWeight: 600,
+              background: mode === m ? "#7c3aed" : "#1e293b",
+              color: mode === m ? "#fff" : "#64748b", cursor: "pointer"
+            }}>
+              {m === "login" ? "Ingresar" : "Registrarse"}
+            </button>
+          ))}
+        </div>
+
+        {error && (
+          <div style={{
+            background: "#1a0a0a", border: "1px solid #7f1d1d", borderRadius: 8,
+            padding: "10px 14px", color: "#fca5a5", fontSize: 13, marginBottom: 16
+          }}>{error}</div>
+        )}
+        {success && (
+          <div style={{
+            background: "#0a1a0a", border: "1px solid #166534", borderRadius: 8,
+            padding: "10px 14px", color: "#86efac", fontSize: 13, marginBottom: 16
+          }}>{success}</div>
+        )}
+
+        {mode === "register" && (
+          <>
+            <label style={S.label}>Nombre</label>
+            <input style={S.input} value={form.nombre}
+              onChange={e => setForm(p => ({ ...p, nombre: e.target.value }))}
+              placeholder="Ramiro" />
+            <label style={S.label}>Apellido</label>
+            <input style={S.input} value={form.apellido}
+              onChange={e => setForm(p => ({ ...p, apellido: e.target.value }))}
+              placeholder="Díaz López" />
+            <label style={S.label}>Especialidad</label>
+            <select style={{ ...S.input, marginBottom: 12 }} value={form.especialidad}
+              onChange={e => setForm(p => ({ ...p, especialidad: e.target.value }))}>
+              {["Psiquiatra", "Psicólogo/a", "Médico/a", "Médico/a Laboral", "Otro"].map(e =>
+                <option key={e}>{e}</option>)}
+            </select>
+            <label style={S.label}>Matrícula</label>
+            <input style={S.input} value={form.matricula}
+              onChange={e => setForm(p => ({ ...p, matricula: e.target.value }))}
+              placeholder="MP 12345" />
+          </>
+        )}
+
+        <label style={S.label}>Email</label>
+        <input style={S.input} type="email" value={form.email}
+          onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
+          placeholder="email@ejemplo.com" />
+        <label style={S.label}>Contraseña</label>
+        <input style={S.input} type="password" value={form.password}
+          onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
+          placeholder="••••••••"
+          onKeyDown={e => e.key === "Enter" && (mode === "login" ? handleLogin() : handleRegister())} />
+
+        <button style={S.btn()} onClick={mode === "login" ? handleLogin : handleRegister} disabled={loading}>
+          {loading ? "Procesando..." : mode === "login" ? "Ingresar →" : "Crear cuenta →"}
+        </button>
       </div>
     </div>
   );
 }
 
-// ─── SPACE SELECTOR ───────────────────────────────────────────────────────────
-function SpaceSelector({ professional, onSelect, onLogout }) {
+// ─── MODULE SELECTOR ──────────────────────────────────────────────────────────
+function ModuleSelector({ professional, onSelect, onLogout }) {
   return (
-    <div style={{ minHeight:"100vh", background:"#070c18", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'DM Sans',sans-serif", padding:24 }}>
-      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet"/>
-      <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}`}</style>
-      <div style={{ width:"100%", maxWidth:680, animation:"fadeIn 0.4s ease" }}>
-
-        {/* Header with professional info */}
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:40 }}>
-          <div style={{ textAlign:"left" }}>
-            <svg viewBox="0 0 260 60" width="160" style={{ display:"inline-block", marginBottom:4 }}>
-              <line x1="28" y1="10" x2="44" y2="38" stroke="#AFA9EC" strokeWidth="1" opacity="0.6"/>
-              <line x1="28" y1="10" x2="12" y2="38" stroke="#AFA9EC" strokeWidth="1" opacity="0.6"/>
-              <line x1="12" y1="38" x2="44" y2="38" stroke="#AFA9EC" strokeWidth="1" opacity="0.6"/>
-              <line x1="28" y1="10" x2="28" y2="26" stroke="#AFA9EC" strokeWidth="1" opacity="0.35"/>
-              <line x1="12" y1="38" x2="28" y2="26" stroke="#AFA9EC" strokeWidth="1" opacity="0.35"/>
-              <line x1="44" y1="38" x2="28" y2="26" stroke="#AFA9EC" strokeWidth="1" opacity="0.35"/>
-              <circle cx="28" cy="26" r="4" fill="#AFA9EC" opacity="0.25"/>
-              <circle cx="28" cy="26" r="2.5" fill="#7F77DD"/>
-              <circle cx="28" cy="10" r="2.5" fill="#7F77DD"/>
-              <circle cx="12" cy="38" r="2.5" fill="#7F77DD"/>
-              <circle cx="44" cy="38" r="2.5" fill="#7F77DD"/>
-              <circle cx="28" cy="24" r="16" fill="none" stroke="#7F77DD" strokeWidth="1.2" strokeDasharray="72 24" strokeDashoffset="-6" strokeLinecap="round"/>
-              <text x="66" y="40" fontFamily="system-ui,sans-serif" fontSize="32" fontWeight="700" letterSpacing="-1" fill="#ffffff">COGN</text>
-              <text x="178" y="40" fontFamily="system-ui,sans-serif" fontSize="32" fontWeight="700" letterSpacing="-1" fill="#AFA9EC">IA</text>
-            </svg>
-          </div>
-          <div style={{ textAlign:"right" }}>
-            {professional && (
-              <div style={{ background:"#0f172a", border:"1px solid #1e293b", borderRadius:12, padding:"10px 16px", marginBottom:0 }}>
-                <p style={{ margin:"0 0 2px", fontSize:13, fontWeight:700, color:"#e2e8f0" }}>{professional.nombre} {professional.apellido}</p>
-                <p style={{ margin:"0 0 6px", fontSize:11, color:"#7c3aed" }}>{professional.especialidad} · Mat. {professional.matricula}</p>
-                <button onClick={onLogout} style={{ background:"transparent", border:"1px solid #334155", borderRadius:7, padding:"4px 12px", color:"#64748b", cursor:"pointer", fontSize:11, fontFamily:"inherit" }}>Cerrar sesión</button>
-              </div>
-            )}
-          </div>
+    <div style={{
+      minHeight: "100vh", background: "#060b18",
+      display: "flex", flexDirection: "column", alignItems: "center",
+      justifyContent: "center", fontFamily: "'Segoe UI', sans-serif", gap: 32
+    }}>
+      <div style={{ textAlign: "center" }}>
+        <div style={{ fontSize: 32, fontWeight: 800, color: "#e2e8f0", letterSpacing: -1 }}>
+          🧠 COGN<span style={{ color: "#7c3aed" }}>IA</span>
         </div>
-
-        {/* Module cards */}
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20 }}>
-          <button onClick={()=>onSelect("salud_mental")} style={{ background:"#0f172a", border:"1px solid #7F77DD44", borderRadius:20, padding:32, cursor:"pointer", textAlign:"left", fontFamily:"inherit", transition:"all 0.2s" }}
-            onMouseEnter={e=>{e.currentTarget.style.borderColor="#7F77DD";e.currentTarget.style.background="#1a1040";}}
-            onMouseLeave={e=>{e.currentTarget.style.borderColor="#7F77DD44";e.currentTarget.style.background="#0f172a";}}>
-            <div style={{ width:48, height:48, borderRadius:14, background:"#7F77DD22", border:"1px solid #7F77DD44", display:"flex", alignItems:"center", justifyContent:"center", marginBottom:18, fontSize:22 }}>🧠</div>
-            <p style={{ color:"#f1f5f9", fontSize:18, fontWeight:700, margin:"0 0 6px", fontFamily:"'DM Serif Display'" }}>Salud Mental</p>
-            <p style={{ color:"#64748b", fontSize:13, margin:"0 0 20px", lineHeight:1.5 }}>Evaluaciones clínicas, seguimiento e informes con IA</p>
-            <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:16 }}>
-              {["PHQ-9","GAD-7","PCL-5","BDI-II","AUDIT","ISI","+ 14 más"].map(t=>(
-                <span key={t} style={{ background:"#7F77DD22", color:"#AFA9EC", border:"1px solid #7F77DD33", borderRadius:6, padding:"2px 8px", fontSize:11, fontWeight:600 }}>{t}</span>
-              ))}
-            </div>
-            <div style={{ display:"flex", alignItems:"center", gap:6, color:"#7F77DD", fontSize:13, fontWeight:600 }}>Ingresar →</div>
-          </button>
-
-          <button onClick={()=>onSelect("laboral")} style={{ background:"#0f172a", border:"1px solid #14B8A644", borderRadius:20, padding:32, cursor:"pointer", textAlign:"left", fontFamily:"inherit", transition:"all 0.2s" }}
-            onMouseEnter={e=>{e.currentTarget.style.borderColor="#14B8A6";e.currentTarget.style.background="#041a18";}}
-            onMouseLeave={e=>{e.currentTarget.style.borderColor="#14B8A644";e.currentTarget.style.background="#0f172a";}}>
-            <div style={{ width:48, height:48, borderRadius:14, background:"#14B8A622", border:"1px solid #14B8A644", display:"flex", alignItems:"center", justifyContent:"center", marginBottom:18, fontSize:22 }}>🏭</div>
-            <p style={{ color:"#f1f5f9", fontSize:18, fontWeight:700, margin:"0 0 6px", fontFamily:"'DM Serif Display'" }}>Medicina Laboral</p>
-            <p style={{ color:"#64748b", fontSize:13, margin:"0 0 20px", lineHeight:1.5 }}>Aptitud psicofísica, fatiga, cognición y riesgo pre-turno</p>
-            <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:16 }}>
-              {["Stroop","Trail Making","PVT","Burnout","Estrés","Fatiga","+ más"].map(t=>(
-                <span key={t} style={{ background:"#14B8A622", color:"#5DCAA5", border:"1px solid #14B8A633", borderRadius:6, padding:"2px 8px", fontSize:11, fontWeight:600 }}>{t}</span>
-              ))}
-            </div>
-            <div style={{ display:"flex", alignItems:"center", gap:6, color:"#14B8A6", fontSize:13, fontWeight:600 }}>Ingresar →</div>
-          </button>
+        <div style={{ color: "#64748b", marginTop: 8, fontSize: 14 }}>
+          {professional
+            ? `Dr/a. ${professional.nombre} ${professional.apellido} · ${professional.especialidad}`
+            : "Bienvenido/a"}
         </div>
-
-        <div style={{ marginTop:24, background:"#0f172a", border:"1px solid #1e293b", borderRadius:14, padding:"16px 24px", display:"flex", justifyContent:"space-around", alignItems:"center" }}>
-          {[{label:"Tests disponibles",value:"32+"},{label:"Módulos",value:"2"},{label:"Informes con IA",value:"✦"},{label:"Datos seguros",value:"🔒"}].map(s=>(
-            <div key={s.label} style={{ textAlign:"center" }}>
-              <p style={{ color:"#AFA9EC", fontWeight:700, fontSize:18, margin:"0 0 2px" }}>{s.value}</p>
-              <p style={{ color:"#475569", fontSize:11, margin:0 }}>{s.label}</p>
-            </div>
-          ))}
-        </div>
-        <p style={{ textAlign:"center", color:"#334155", fontSize:11, marginTop:20 }}>COGNIA · ITMED · Córdoba 844, Rosario</p>
       </div>
+
+      <div style={{ display: "flex", gap: 20 }}>
+        {[
+          { id: "salud", label: "Salud Mental", icon: "🧠", desc: "PHQ-9, GAD-7, AUDIT, BDI-II y más" },
+          { id: "laboral", label: "Salud Laboral", icon: "🏭", desc: "Burnout, estrés laboral, ergonomía" }
+        ].map(m => (
+          <div key={m.id} onClick={() => onSelect(m.id)} style={{
+            background: "#0d1526", border: "1px solid #1e293b", borderRadius: 18,
+            padding: "32px 40px", cursor: "pointer", textAlign: "center",
+            transition: "all 0.2s", minWidth: 200
+          }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = "#7c3aed"; e.currentTarget.style.transform = "translateY(-4px)"; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = "#1e293b"; e.currentTarget.style.transform = "translateY(0)"; }}>
+            <div style={{ fontSize: 42, marginBottom: 12 }}>{m.icon}</div>
+            <div style={{ color: "#e2e8f0", fontWeight: 700, fontSize: 16 }}>{m.label}</div>
+            <div style={{ color: "#64748b", fontSize: 12, marginTop: 6 }}>{m.desc}</div>
+          </div>
+        ))}
+      </div>
+
+      <button onClick={onLogout} style={{
+        background: "none", border: "1px solid #1e293b", borderRadius: 8,
+        color: "#64748b", padding: "8px 20px", cursor: "pointer", fontSize: 13
+      }}>
+        Cerrar sesión
+      </button>
     </div>
   );
 }
 
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 export default function App() {
-  const [session, setSession] = useState(null);
+  const [user, setUser] = useState(null);
   const [professional, setProfessional] = useState(null);
-  const [space, setSpace] = useState(null);
+  const [module, setModule] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let mounted = true;
-
-    // Use onAuthStateChange as primary source of truth
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!mounted) return;
-      setSession(session);
-      if (session) {
-        const { data: prof } = await supabase.from("professionals").select("*").eq("id", session.user.id).single();
-        if (mounted) setProfessional(prof);
-      } else {
-        setProfessional(null);
-        setSpace(null);
+    // FIX 3: restaurar sesión al recargar
+    const restoreSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          let prof = null;
+          try {
+            const { data } = await supabase
+              .from("professionals")
+              .select("*")
+              .eq("id", session.user.id)
+              .maybeSingle();
+            prof = data;
+          } catch (e) {
+            console.warn("Perfil no cargado:", e);
+          }
+          // Si no existe el perfil, crearlo
+          if (!prof) {
+            const defaultProf = {
+              id: session.user.id,
+              nombre: session.user.email.split("@")[0],
+              apellido: "",
+              especialidad: "Médico",
+              matricula: "",
+              email: session.user.email
+            };
+            const { data: newProf } = await supabase
+              .from("professionals")
+              .insert(defaultProf)
+              .select()
+              .single();
+            prof = newProf || defaultProf;
+          }
+          setUser(session.user);
+          setProfessional(prof);
+        }
+      } catch (e) {
+        console.error("Error restaurando sesión:", e);
       }
-      if (mounted) setLoading(false);
+      setLoading(false);
+    };
+
+    restoreSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === "SIGNED_OUT") {
+        setUser(null); setProfessional(null); setModule(null);
+      }
     });
 
-    // Timeout fallback — if no auth event in 4s, stop loading
-    const timeout = setTimeout(() => {
-      if (mounted) setLoading(false);
-    }, 4000);
-
-    return () => {
-      mounted = false;
-      clearTimeout(timeout);
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
+
+  const handleAuth = (u, prof) => {
+    setUser(u);
+    setProfessional(prof);
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    setSpace(null);
-    setProfessional(null);
+    setUser(null); setProfessional(null); setModule(null);
   };
 
-  if (loading) return (
-    <div style={{ minHeight:"100vh", background:"#070c18", display:"flex", alignItems:"center", justifyContent:"center" }}>
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-      <div style={{ width:36, height:36, borderRadius:"50%", border:"3px solid #1e293b", borderTopColor:"#7c3aed", animation:"spin 1s linear infinite" }}/>
-    </div>
+  const handleUpdateProfessional = (updated) => {
+    setProfessional(updated);
+  };
+
+  if (loading) {
+    return (
+      <div style={{
+        minHeight: "100vh", background: "#060b18", display: "flex",
+        alignItems: "center", justifyContent: "center", color: "#7c3aed", fontSize: 18
+      }}>
+        Cargando...
+      </div>
+    );
+  }
+
+  if (!user) return <AuthScreen onAuth={handleAuth} />;
+  if (!module) return (
+    <ModuleSelector
+      professional={professional}
+      onSelect={setModule}
+      onLogout={handleLogout}
+    />
   );
-
-  if (!session) return <AuthScreen onAuth={(user, prof) => { setSession(user); setProfessional(prof); }} />;
-
-  if (space === "salud_mental") return <SaludMental onBack={()=>setSpace(null)} professional={professional} supabase={supabase}/>;
-  if (space === "laboral") return <Laboral onBack={()=>setSpace(null)} professional={professional} supabase={supabase}/>;
-
-  return <SpaceSelector professional={professional} onSelect={setSpace} onLogout={handleLogout}/>;
+  if (module === "salud") return (
+    <SaludMental
+      user={user}
+      professional={professional}
+      onUpdateProfessional={handleUpdateProfessional}
+      onBack={() => setModule(null)}
+      onLogout={handleLogout}
+      supabase={supabase}
+    />
+  );
+  if (module === "laboral") return (
+    <Laboral
+      user={user}
+      professional={professional}
+      onUpdateProfessional={handleUpdateProfessional}
+      onBack={() => setModule(null)}
+      onLogout={handleLogout}
+      supabase={supabase}
+    />
+  );
 }
