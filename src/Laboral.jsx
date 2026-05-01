@@ -48,7 +48,7 @@ const QUESTIONNAIRES = {
     area:"Fatiga", icon:"⚡", duration:"3 min",
     instructions:"Comparado con cuando se sentía bien, ¿en qué medida experimenta los siguientes síntomas actualmente?",
     options:[{label:"Menos de lo habitual",value:0},{label:"No más de lo habitual",value:0},{label:"Más de lo habitual",value:1},{label:"Mucho más de lo habitual",value:1}],
-    questions:["¿Tiene problemas con el cansancio?","¿Necesita descansar más?","¿Se siente somnoliento/a o adormecido/a?","¿Tiene dificultad para comenzar cosas?","¿Se siente débil en los músculos?","¿Se siente poco animado/a?","¿Tiene dificultad para concentrarse?","¿Tiene problemas para pensar claramente?","¿Siente que pronunciar mal las palabras?","¿Tiene problemas para encontrar la palabra correcta?","¿¿Cómo es su memoria?"],
+    questions:["¿Tiene problemas con el cansancio?","¿Necesita descansar más?","¿Se siente somnoliento/a o adormecido/a?","¿Tiene dificultad para comenzar cosas?","¿Se siente débil en los músculos?","¿Se siente poco animado/a?","¿Tiene dificultad para concentrarse?","¿Tiene problemas para pensar claramente?","¿Siente que pronuncia mal las palabras?","¿Tiene problemas para encontrar la palabra correcta?","¿Cómo es su memoria?"],
     maxScore:11,
     aptitud:(t)=>t<=3?"apto":t<=6?"restriccion":"no_apto",
     score:(t)=>t<=3?{level:"Sin fatiga",color:"#22c55e"}:t<=6?{level:"Fatiga leve",color:"#fbbf24"}:{level:"Fatiga significativa",color:"#ef4444"},
@@ -96,10 +96,8 @@ const QUESTIONNAIRES = {
 };
 
 // ─── COGNITIVE TESTS ─────────────────────────────────────────────────────────
-
-// REACTION TIME TEST
 function ReactionTimeTest({onComplete}){
-  const [phase,setPhase]=useState("intro"); // intro | waiting | ready | click | results
+  const [phase,setPhase]=useState("intro");
   const [trials,setTrials]=useState([]);
   const [currentTrial,setCurrentTrial]=useState(0);
   const [startTime,setStartTime]=useState(null);
@@ -108,14 +106,9 @@ function ReactionTimeTest({onComplete}){
   const TOTAL_TRIALS=8;
 
   const startTrial=useCallback(()=>{
-    setBgColor("#0f172a");
-    setPhase("waiting");
+    setBgColor("#0f172a");setPhase("waiting");
     const delay=1500+Math.random()*2500;
-    timerRef.current=setTimeout(()=>{
-      setBgColor("#22c55e");
-      setStartTime(Date.now());
-      setPhase("ready");
-    },delay);
+    timerRef.current=setTimeout(()=>{setBgColor("#22c55e");setStartTime(Date.now());setPhase("ready");},delay);
   },[]);
 
   const handleClick=()=>{
@@ -130,9 +123,7 @@ function ReactionTimeTest({onComplete}){
     if(phase==="ready"){
       const rt=Date.now()-startTime;
       const newTrials=[...trials,{rt,error:null}];
-      setTrials(newTrials);
-      setBgColor("#0f172a");
-      setCurrentTrial(t=>t+1);
+      setTrials(newTrials);setBgColor("#0f172a");setCurrentTrial(t=>t+1);
       if(currentTrial+1>=TOTAL_TRIALS) finalize(newTrials);
       else{setPhase("waiting");setTimeout(startTrial,800);}
     }
@@ -155,24 +146,19 @@ function ReactionTimeTest({onComplete}){
       <h3 style={{color:"#f1f5f9",marginBottom:12}}>Test de Tiempo de Reacción</h3>
       <p style={{color:"#64748b",fontSize:14,marginBottom:8,lineHeight:1.6}}>Cuando la pantalla se ponga <strong style={{color:"#22c55e"}}>VERDE</strong>, tocá lo antes posible.</p>
       <p style={{color:"#f97316",fontSize:13,marginBottom:24}}>⚠ Si tocás antes de que cambie el color, se cuenta como error.</p>
-      <p style={{color:"#64748b",fontSize:13,marginBottom:24}}>{TOTAL_TRIALS} intentos en total</p>
       <button onClick={()=>{setPhase("waiting");startTrial();}} style={{background:TEAL,color:"#fff",border:"none",borderRadius:10,padding:"12px 32px",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Comenzar</button>
     </div>
   );
-
   if(phase==="results") return null;
-
   return(
     <div onClick={handleClick} style={{background:bgColor,borderRadius:16,padding:48,textAlign:"center",cursor:"pointer",transition:"background 0.1s",minHeight:200,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",userSelect:"none"}}>
       <p style={{color:"#94a3b8",fontSize:13,marginBottom:12}}>Intento {currentTrial+1} de {TOTAL_TRIALS}</p>
       {phase==="waiting"&&<p style={{color:"#475569",fontSize:18,fontWeight:600}}>Esperá...</p>}
       {phase==="ready"&&<p style={{color:"#fff",fontSize:24,fontWeight:700}}>¡AHORA!</p>}
-      <p style={{color:"#334155",fontSize:12,marginTop:16}}>Tocá la pantalla</p>
     </div>
   );
 }
 
-// PVT - PSYCHOMOTOR VIGILANCE TASK
 function PVTTest({onComplete}){
   const [phase,setPhase]=useState("intro");
   const [counter,setCounter]=useState(null);
@@ -188,17 +174,11 @@ function PVTTest({onComplete}){
   const runTrial=useCallback(()=>{
     const delay=2000+Math.random()*8000;
     trialRef.current=setTimeout(()=>{
-      const t0=Date.now();
-      setStartTime(t0);
-      setShowing(true);
-      setCounter(0);
+      const t0=Date.now();setStartTime(t0);setShowing(true);setCounter(0);
       countRef.current=setInterval(()=>setCounter(c=>c!==null?c+1:0),1);
       timerRef.current=setTimeout(()=>{
-        setShowing(false);setCounter(null);
-        clearInterval(countRef.current);
-        setLapses(l=>l+1);
-        setReactions(r=>[...r,{rt:500,lapse:true}]);
-        runTrial();
+        setShowing(false);setCounter(null);clearInterval(countRef.current);
+        setLapses(l=>l+1);setReactions(r=>[...r,{rt:500,lapse:true}]);runTrial();
       },500);
     },delay);
   },[]);
@@ -207,21 +187,14 @@ function PVTTest({onComplete}){
     if(!showing) return;
     const rt=Date.now()-startTime;
     clearTimeout(timerRef.current);clearInterval(countRef.current);
-    setShowing(false);setCounter(null);
-    setReactions(r=>[...r,{rt,lapse:false}]);
-    runTrial();
+    setShowing(false);setCounter(null);setReactions(r=>[...r,{rt,lapse:false}]);runTrial();
   };
 
   useEffect(()=>{
     if(phase!=="running") return;
     const countdown=setInterval(()=>{
       setTimeLeft(t=>{
-        if(t<=1){
-          clearInterval(countdown);
-          clearTimeout(trialRef.current);clearTimeout(timerRef.current);clearInterval(countRef.current);
-          setPhase("done");
-          return 0;
-        }
+        if(t<=1){clearInterval(countdown);clearTimeout(trialRef.current);clearTimeout(timerRef.current);clearInterval(countRef.current);setPhase("done");return 0;}
         return t-1;
       });
     },1000);
@@ -243,13 +216,11 @@ function PVTTest({onComplete}){
       <p style={{fontSize:32,marginBottom:16}}>👁</p>
       <h3 style={{color:"#f1f5f9",marginBottom:12}}>Test de Vigilancia Psicomotora (PVT)</h3>
       <p style={{color:"#64748b",fontSize:14,marginBottom:8,lineHeight:1.6}}>Cuando aparezca el contador, tocá la pantalla lo más rápido posible.</p>
-      <p style={{color:"#64748b",fontSize:13,marginBottom:24}}>Duración: 2 minutos. Estándar en aviación y transporte.</p>
+      <p style={{color:"#64748b",fontSize:13,marginBottom:24}}>Duración: 2 minutos.</p>
       <button onClick={()=>setPhase("running")} style={{background:TEAL,color:"#fff",border:"none",borderRadius:10,padding:"12px 32px",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Comenzar</button>
     </div>
   );
-
   if(phase==="done") return null;
-
   return(
     <div onClick={handleTap} style={{background:"#0f172a",borderRadius:16,padding:32,textAlign:"center",cursor:"pointer",minHeight:220,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",userSelect:"none"}}>
       <div style={{display:"flex",justifyContent:"space-between",width:"100%",marginBottom:24}}>
@@ -257,19 +228,11 @@ function PVTTest({onComplete}){
         <span style={{color:"#f97316",fontSize:12}}>Lapsos: {lapses}</span>
         <span style={{color:"#64748b",fontSize:12}}>Resp.: {reactions.filter(r=>!r.lapse).length}</span>
       </div>
-      {showing?(
-        <div style={{background:"#ef4444",borderRadius:12,padding:"20px 40px",minWidth:120}}>
-          <p style={{color:"#fff",fontSize:36,fontWeight:700,margin:0,fontFamily:"monospace"}}>{counter}</p>
-        </div>
-      ):(
-        <p style={{color:"#334155",fontSize:16}}>Esperá el contador...</p>
-      )}
-      <p style={{color:"#334155",fontSize:12,marginTop:16}}>Tocá cuando aparezca el número</p>
+      {showing?(<div style={{background:"#ef4444",borderRadius:12,padding:"20px 40px",minWidth:120}}><p style={{color:"#fff",fontSize:36,fontWeight:700,margin:0,fontFamily:"monospace"}}>{counter}</p></div>):(<p style={{color:"#334155",fontSize:16}}>Esperá el contador...</p>)}
     </div>
   );
 }
 
-// STROOP TEST
 function StroopTest({onComplete}){
   const COLORS={ROJO:"#ef4444",VERDE:"#22c55e",AZUL:"#3b82f6",AMARILLO:"#fbbf24"};
   const WORDS=["ROJO","VERDE","AZUL","AMARILLO"];
@@ -288,8 +251,7 @@ function StroopTest({onComplete}){
       const avgRt=Math.round(res.filter(r=>r.correct).reduce((s,r)=>s+r.rt,0)/Math.max(res.filter(r=>r.correct).length,1));
       const errors=res.filter(r=>!r.correct).length;
       const aptitud=correct>=12&&avgRt<=1200?"apto":correct>=9&&avgRt<=1600?"restriccion":"no_apto";
-      onComplete({correct,errors,avgRt,total:TRIALS,aptitud});
-      return;
+      onComplete({correct,errors,avgRt,total:TRIALS,aptitud});return;
     }
     const w=WORDS[Math.floor(Math.random()*WORDS.length)];
     const inkOptions=WORDS.filter(x=>x!==w);
@@ -298,11 +260,9 @@ function StroopTest({onComplete}){
   },[]);
 
   const handleAnswer=(chosen)=>{
-    const rt=Date.now()-startTime;
-    const correct=chosen===color;
+    const rt=Date.now()-startTime;const correct=chosen===color;
     setFeedback(correct?"correct":"wrong");
-    const newRes=[...results,{correct,rt,word,color,chosen}];
-    setResults(newRes);
+    const newRes=[...results,{correct,rt,word,color,chosen}];setResults(newRes);
     setTimeout(()=>nextTrial(newRes),400);
   };
 
@@ -310,36 +270,30 @@ function StroopTest({onComplete}){
     <div style={{textAlign:"center",padding:32}}>
       <p style={{fontSize:32,marginBottom:16}}>🎨</p>
       <h3 style={{color:"#f1f5f9",marginBottom:12}}>Test de Stroop</h3>
-      <p style={{color:"#64748b",fontSize:14,marginBottom:8,lineHeight:1.6}}>Vas a ver una palabra escrita en un color.</p>
-      <p style={{color:"#f1f5f9",fontSize:14,marginBottom:4}}>Tu tarea: tocá el <strong>COLOR DE LA TINTA</strong>, no lo que dice la palabra.</p>
+      <p style={{color:"#f1f5f9",fontSize:14,marginBottom:4}}>Tocá el <strong>COLOR DE LA TINTA</strong>, no lo que dice la palabra.</p>
       <div style={{margin:"20px auto",padding:16,background:"#0f172a",borderRadius:12,display:"inline-block"}}>
         <p style={{fontSize:28,fontWeight:700,color:"#3b82f6",margin:0}}>ROJO</p>
-        <p style={{color:"#64748b",fontSize:12,marginTop:4}}>Respuesta correcta: AZUL (el color de la tinta)</p>
+        <p style={{color:"#64748b",fontSize:12,marginTop:4}}>Respuesta correcta: AZUL</p>
       </div>
       <div style={{marginBottom:24}}/>
       <button onClick={()=>{setPhase("running");nextTrial([]);}} style={{background:TEAL,color:"#fff",border:"none",borderRadius:10,padding:"12px 32px",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Comenzar</button>
     </div>
   );
-
   if(phase==="running") return(
     <div style={{textAlign:"center"}}>
       <p style={{color:"#64748b",fontSize:12,marginBottom:20}}>{trial+1} / {TRIALS}</p>
-      <div style={{background:feedback==="correct"?"#22c55e11":feedback==="wrong"?"#ef444411":"#0f172a",borderRadius:16,padding:"32px 24px",marginBottom:24,transition:"background 0.2s",minHeight:120,display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <div style={{background:feedback==="correct"?"#22c55e11":feedback==="wrong"?"#ef444411":"#0f172a",borderRadius:16,padding:"32px 24px",marginBottom:24,minHeight:120,display:"flex",alignItems:"center",justifyContent:"center"}}>
         <p style={{fontSize:44,fontWeight:900,color:COLORS[color],margin:0,letterSpacing:2}}>{word}</p>
       </div>
       <p style={{color:"#64748b",fontSize:13,marginBottom:16}}>¿De qué color es la tinta?</p>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-        {WORDS.map(w=>(
-          <button key={w} onClick={()=>handleAnswer(w)} style={{background:COLORS[w]+"22",border:`2px solid ${COLORS[w]}55`,borderRadius:12,padding:"14px",color:COLORS[w],fontWeight:700,fontSize:15,cursor:"pointer",fontFamily:"inherit",transition:"all 0.1s"}}>{w}</button>
-        ))}
+        {WORDS.map(w=>(<button key={w} onClick={()=>handleAnswer(w)} style={{background:COLORS[w]+"22",border:`2px solid ${COLORS[w]}55`,borderRadius:12,padding:"14px",color:COLORS[w],fontWeight:700,fontSize:15,cursor:"pointer",fontFamily:"inherit"}}>{w}</button>))}
       </div>
     </div>
   );
-
   return null;
 }
 
-// TRAIL MAKING TEST A
 function TrailMakingTest({onComplete}){
   const N=10;
   const [phase,setPhase]=useState("intro");
@@ -349,13 +303,8 @@ function TrailMakingTest({onComplete}){
   const [positions]=useState(()=>{
     const pos=[];
     for(let i=0;i<N;i++){
-      let x,y,ok=false;
-      let attempts=0;
-      while(!ok&&attempts<100){
-        x=10+Math.random()*78;y=10+Math.random()*78;
-        ok=pos.every(p=>Math.hypot(p.x-x,p.y-y)>14);
-        attempts++;
-      }
+      let x,y,ok=false,attempts=0;
+      while(!ok&&attempts<100){x=10+Math.random()*78;y=10+Math.random()*78;ok=pos.every(p=>Math.hypot(p.x-x,p.y-y)>14);attempts++;}
       pos.push({x,y,n:i+1});
     }
     return pos;
@@ -364,12 +313,8 @@ function TrailMakingTest({onComplete}){
   const handleClick=(n)=>{
     if(n===next){
       if(next===1) setStartTime(Date.now());
-      if(next===N){
-        const time=Math.round((Date.now()-startTime)/1000);
-        const aptitud=time<=45&&errors<=2?"apto":time<=75&&errors<=4?"restriccion":"no_apto";
-        onComplete({time,errors,aptitud});
-        setPhase("done");
-      } else setNext(n+1);
+      if(next===N){const time=Math.round((Date.now()-startTime)/1000);const aptitud=time<=45&&errors<=2?"apto":time<=75&&errors<=4?"restriccion":"no_apto";onComplete({time,errors,aptitud});setPhase("done");}
+      else setNext(n+1);
     } else setErrors(e=>e+1);
   };
 
@@ -378,13 +323,10 @@ function TrailMakingTest({onComplete}){
       <p style={{fontSize:32,marginBottom:16}}>🔢</p>
       <h3 style={{color:"#f1f5f9",marginBottom:12}}>Trail Making Test — Parte A</h3>
       <p style={{color:"#64748b",fontSize:14,marginBottom:8,lineHeight:1.6}}>Tocá los números del <strong style={{color:TEAL}}>1 al {N}</strong> en orden, lo más rápido posible.</p>
-      <p style={{color:"#64748b",fontSize:13,marginBottom:24}}>Evalúa atención y velocidad de procesamiento.</p>
       <button onClick={()=>setPhase("running")} style={{background:TEAL,color:"#fff",border:"none",borderRadius:10,padding:"12px 32px",fontSize:15,fontWeight:700,cursor:"pointer",fontFamily:"inherit"}}>Comenzar</button>
     </div>
   );
-
   if(phase==="done") return null;
-
   return(
     <div>
       <div style={{display:"flex",justifyContent:"space-between",marginBottom:12}}>
@@ -392,51 +334,24 @@ function TrailMakingTest({onComplete}){
         <p style={{color:"#f97316",fontSize:13,margin:0}}>Errores: {errors}</p>
       </div>
       <div style={{position:"relative",background:"#0f172a",borderRadius:16,paddingBottom:"80%",overflow:"hidden"}}>
-        {positions.map(p=>{
-          const done=p.n<next;
-          const isNext=p.n===next;
-          return(
-            <button key={p.n} onClick={()=>handleClick(p.n)} style={{
-              position:"absolute",left:`${p.x}%`,top:`${p.y}%`,
-              width:36,height:36,borderRadius:"50%",
-              background:done?"#1e293b":isNext?TEAL+"44":"#1e293b",
-              border:`2px solid ${done?"#334155":isNext?TEAL:"#475569"}`,
-              color:done?"#334155":isNext?"#fff":"#94a3b8",
-              fontWeight:700,fontSize:13,cursor:"pointer",
-              display:"flex",alignItems:"center",justifyContent:"center",
-              transform:"translate(-50%,-50%)",
-              transition:"all 0.15s",fontFamily:"inherit",
-            }}>{p.n}</button>
-          );
-        })}
+        {positions.map(p=>{const done=p.n<next;const isNext=p.n===next;return(
+          <button key={p.n} onClick={()=>handleClick(p.n)} style={{position:"absolute",left:`${p.x}%`,top:`${p.y}%`,width:36,height:36,borderRadius:"50%",background:done?"#1e293b":isNext?TEAL+"44":"#1e293b",border:`2px solid ${done?"#334155":isNext?TEAL:"#475569"}`,color:done?"#334155":isNext?"#fff":"#94a3b8",fontWeight:700,fontSize:13,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",transform:"translate(-50%,-50%)",fontFamily:"inherit"}}>{p.n}</button>
+        );})}
       </div>
     </div>
   );
 }
 
-// ─── COGNITIVE TEST WRAPPER ───────────────────────────────────────────────────
 const COG_TESTS = {
-  reaction_time: { id:"reaction_time", name:"Tiempo de Reacción", area:"Cognición", icon:"⚡", duration:"90 seg", Component:ReactionTimeTest,
-    describe:(r)=>r?`Tiempo medio: ${r.avg}ms | Errores: ${r.errors}`:"—",
-    aptitudLabel:(r)=>r?APTITUD[r.aptitud]:null },
-  pvt: { id:"pvt", name:"PVT", area:"Vigilancia", icon:"👁", duration:"2 min", Component:PVTTest,
-    describe:(r)=>r?`TR medio: ${r.avg}ms | Lapsos: ${r.lapses}`:"—",
-    aptitudLabel:(r)=>r?APTITUD[r.aptitud]:null },
-  stroop: { id:"stroop", name:"Stroop", area:"Control inhibitorio", icon:"🎨", duration:"3 min", Component:StroopTest,
-    describe:(r)=>r?`Correctas: ${r.correct}/${r.total} | TR medio: ${r.avgRt}ms`:"—",
-    aptitudLabel:(r)=>r?APTITUD[r.aptitud]:null },
-  trail_making: { id:"trail_making", name:"Trail Making A", area:"Atención", icon:"🔢", duration:"2 min", Component:TrailMakingTest,
-    describe:(r)=>r?`Tiempo: ${r.time}s | Errores: ${r.errors}`:"—",
-    aptitudLabel:(r)=>r?APTITUD[r.aptitud]:null },
+  reaction_time:{ id:"reaction_time",name:"Tiempo de Reacción",area:"Cognición",icon:"⚡",duration:"90 seg",Component:ReactionTimeTest,
+    describe:(r)=>r?`Tiempo medio: ${r.avg}ms | Errores: ${r.errors}`:"—",aptitudLabel:(r)=>r?APTITUD[r.aptitud]:null },
+  pvt:{ id:"pvt",name:"PVT",area:"Vigilancia",icon:"👁",duration:"2 min",Component:PVTTest,
+    describe:(r)=>r?`TR medio: ${r.avg}ms | Lapsos: ${r.lapses}`:"—",aptitudLabel:(r)=>r?APTITUD[r.aptitud]:null },
+  stroop:{ id:"stroop",name:"Stroop",area:"Control inhibitorio",icon:"🎨",duration:"3 min",Component:StroopTest,
+    describe:(r)=>r?`Correctas: ${r.correct}/${r.total} | TR medio: ${r.avgRt}ms`:"—",aptitudLabel:(r)=>r?APTITUD[r.aptitud]:null },
+  trail_making:{ id:"trail_making",name:"Trail Making A",area:"Atención",icon:"🔢",duration:"2 min",Component:TrailMakingTest,
+    describe:(r)=>r?`Tiempo: ${r.time}s | Errores: ${r.errors}`:"—",aptitudLabel:(r)=>r?APTITUD[r.aptitud]:null },
 };
-
-// ─── MOCK DATA ────────────────────────────────────────────────────────────────
-const MOCK_WORKERS = [
-  { id:"w1", name:"Juan Pérez", dni:"28.456.789", empresa:"Transportes SA", puesto:"Conductor", turno:"Mañana", legajo:"TRN-001",
-    evaluations:[{id:"ev1",date:"2025-04-10",tests:{isi_lab:{total:8,aptitud:"restriccion"},gad7_lab:{total:3,aptitud:"apto"},aptitud_psico:{total:1,aptitud:"restriccion"},reaction_time:{avg:280,errors:1,aptitud:"apto"}}}]},
-  { id:"w2", name:"Ana Martínez", dni:"31.234.567", empresa:"Planta Norte", puesto:"Operaria", turno:"Tarde", legajo:"PLT-045",
-    evaluations:[]},
-];
 
 // ─── PDF EXPORT ──────────────────────────────────────────────────────────────
 let jsPDFLib=null;
@@ -451,29 +366,23 @@ async function loadJsPDF(){
   });
 }
 
-async function exportWorkerPDF(worker, evaluation, reportText, finalAptitud, profName){
+async function exportWorkerPDF(worker,evaluation,reportText,finalAptitud,profName){
   const JsPDF=await loadJsPDF();
   const doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
-  const W=210,margin=20,col=W-margin*2;
-  let y=20;
-  // Header
+  const W=210,margin=20,col=W-margin*2;let y=20;
   doc.setFillColor(4,26,24);doc.rect(0,0,W,28,"F");
   doc.setFontSize(20);doc.setFont("helvetica","bold");doc.setTextColor(255,255,255);
-  doc.text("COGN",margin,18);
-  const cw=doc.getTextWidth("COGN");
+  doc.text("COGN",margin,18);const cw=doc.getTextWidth("COGN");
   doc.setTextColor(175,169,236);doc.text("IA",margin+cw,18);
   doc.setFontSize(8);doc.setFont("helvetica","normal");doc.setTextColor(20,184,166);
   doc.text("MEDICINA LABORAL",margin+cw+doc.getTextWidth("IA")+4,18);
   doc.text(new Date().toLocaleDateString("es-AR",{day:"2-digit",month:"long",year:"numeric"}),W-margin,18,{align:"right"});
   y=36;
-  // Aptitud badge
   const apt=APTITUD[finalAptitud];
   const aptColors={"apto":[34,197,94],"restriccion":[251,191,36],"no_apto":[239,68,68]};
   doc.setFillColor(...aptColors[finalAptitud]);doc.roundedRect(margin,y,col,14,2,2,"F");
   doc.setFontSize(12);doc.setFont("helvetica","bold");doc.setTextColor(255,255,255);
-  doc.text(`RESULTADO: ${apt.label.toUpperCase()}`,margin+4,y+9);
-  y+=20;
-  // Worker info
+  doc.text(`RESULTADO: ${apt.label.toUpperCase()}`,margin+4,y+9);y+=20;
   doc.setFontSize(9);doc.setFont("helvetica","normal");doc.setTextColor(100,116,139);
   doc.text("INFORME DE APTITUD PSICOFÍSICA LABORAL",margin,y);y+=5;
   doc.setDrawColor(71,85,105);doc.setLineWidth(0.3);doc.line(margin,y,W-margin,y);y+=5;
@@ -482,21 +391,16 @@ async function exportWorkerPDF(worker, evaluation, reportText, finalAptitud, pro
     doc.setFont("helvetica","normal");doc.setTextColor(30,30,30);doc.text(v||"—",margin+36,y);y+=6;
   });
   y+=2;doc.setDrawColor(220,220,220);doc.line(margin,y,W-margin,y);y+=5;
-  // Test results
   doc.setFontSize(10);doc.setFont("helvetica","bold");doc.setTextColor(30,30,30);doc.text("RESULTADOS POR TEST",margin,y);y+=6;
+  const allTestDefs={...QUESTIONNAIRES,...Object.fromEntries(Object.entries(COG_TESTS).map(([k,v])=>([k,{...v,maxScore:null}])))};
   Object.entries(evaluation.tests).forEach(([testId,result])=>{
-    const td=QUESTIONNAIRES[testId]||COG_TESTS[testId];
-    if(!td) return;
-    const apt=APTITUD[result.aptitud];
-    const aptC=aptColors[result.aptitud]||[148,163,184];
+    const td=allTestDefs[testId];if(!td) return;
+    const apt=APTITUD[result.aptitud];const aptC=aptColors[result.aptitud]||[148,163,184];
     doc.setFontSize(9);doc.setFont("helvetica","bold");doc.setTextColor(30,30,30);
     doc.text(`${td.name}: ${td.describe?td.describe(result):(result.total!==undefined?`${result.total}/${td.maxScore}`:"")}`,margin,y);
-    doc.setFont("helvetica","bold");doc.setTextColor(...aptC);
-    doc.text(apt?.label||"—",W-margin,y,{align:"right"});
-    y+=6;
+    doc.setFont("helvetica","bold");doc.setTextColor(...aptC);doc.text(apt?.label||"—",W-margin,y,{align:"right"});y+=6;
   });
   y+=2;doc.setDrawColor(220,220,220);doc.line(margin,y,W-margin,y);y+=5;
-  // Report
   if(reportText){
     doc.setFontSize(10);doc.setFont("helvetica","bold");doc.setTextColor(30,30,30);doc.text("INFORME CLÍNICO LABORAL",margin,y);y+=6;
     reportText.replace(/\*\*/g,"").split("\n").filter(l=>l.trim()).forEach(line=>{
@@ -507,17 +411,14 @@ async function exportWorkerPDF(worker, evaluation, reportText, finalAptitud, pro
     });
     y+=4;doc.setDrawColor(220,220,220);doc.line(margin,y,W-margin,y);y+=4;
   }
-  // Firma
   if(profName){
     if(y>250){doc.addPage();y=20;}
-    doc.setFontSize(9);doc.setFont("helvetica","bold");doc.setTextColor(34,197,94);
-    doc.text("FIRMADO DIGITALMENTE",margin,y);y+=5;
+    doc.setFontSize(9);doc.setFont("helvetica","bold");doc.setTextColor(34,197,94);doc.text("FIRMADO DIGITALMENTE",margin,y);y+=5;
     doc.setFont("helvetica","normal");doc.setTextColor(71,85,105);
     doc.text(`Profesional: ${profName}`,margin,y);y+=5;
     doc.text(`Fecha: ${new Date().toLocaleDateString("es-AR")}`,margin,y);y+=5;
     doc.text("Sistema COGNIA Laboral — ITMED",margin,y);
   }
-  // Footer
   const tp=doc.internal.getNumberOfPages();
   for(let i=1;i<=tp;i++){
     doc.setPage(i);doc.setFillColor(4,26,24);doc.rect(0,287,W,10,"F");
@@ -528,49 +429,24 @@ async function exportWorkerPDF(worker, evaluation, reportText, finalAptitud, pro
   doc.save(`COGNIA_Laboral_${worker.name.replace(/\s+/g,"_")}_${evaluation.date}.pdf`);
 }
 
-// ─── AI REPORT ───────────────────────────────────────────────────────────────
-async function generateLaboralReport(worker, evaluation, finalAptitud){
+async function generateLaboralReport(worker,evaluation,finalAptitud){
+  const allTestDefs={...QUESTIONNAIRES,...Object.fromEntries(Object.entries(COG_TESTS).map(([k,v])=>([k,{...v}])))};
   const testsDesc=Object.entries(evaluation.tests).map(([id,r])=>{
-    const td=QUESTIONNAIRES[id]||COG_TESTS[id];
-    if(!td) return "";
+    const td=allTestDefs[id];if(!td) return "";
     const desc=td.describe?td.describe(r):(r.total!==undefined?`Puntaje: ${r.total}/${td.maxScore}`:JSON.stringify(r));
     return `${td.fullName||td.name}: ${desc} — ${APTITUD[r.aptitud]?.label||"—"}`;
   }).join("\n");
-
-  const prompt=`Eres médico especialista en medicina laboral. Generá un informe de aptitud psicofísica profesional en español.
-
-Trabajador: ${worker.name}
-DNI: ${worker.dni}
-Empresa: ${worker.empresa}
-Puesto: ${worker.puesto}
-Turno: ${worker.turno}
-Fecha: ${evaluation.date}
-Resultado final: ${APTITUD[finalAptitud]?.label}
-
-Tests realizados:
-${testsDesc}
-
-El informe debe incluir:
-1. Conclusión de aptitud (1-2 oraciones)
-2. Hallazgos relevantes por área evaluada
-3. Restricciones operativas si corresponde (conducción, trabajo en altura, uso de maquinaria)
-4. Recomendaciones específicas para el puesto
-5. Próxima evaluación sugerida
-
-Tono médico-laboral formal. Aclará que es orientativo y requiere validación profesional. Máximo 350 palabras.`;
-
+  const prompt=`Eres médico especialista en medicina laboral. Generá un informe de aptitud psicofísica profesional en español.\n\nTrabajador: ${worker.name}\nDNI: ${worker.dni}\nEmpresa: ${worker.empresa}\nPuesto: ${worker.puesto}\nTurno: ${worker.turno}\nFecha: ${evaluation.date}\nResultado final: ${APTITUD[finalAptitud]?.label}\n\nTests realizados:\n${testsDesc}\n\nEl informe debe incluir:\n1. Conclusión de aptitud (1-2 oraciones)\n2. Hallazgos relevantes por área evaluada\n3. Restricciones operativas si corresponde\n4. Recomendaciones específicas para el puesto\n5. Próxima evaluación sugerida\n\nTono médico-laboral formal. Aclará que es orientativo y requiere validación profesional. Máximo 350 palabras.`;
   const r=await fetch("https://cognia-ai.ramidiazlopez.workers.dev",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-5",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
   const data=await r.json();
   return data.content?.[0]?.text||"No se pudo generar el informe.";
 }
 
 // ─── WORKER TEST SESSION ─────────────────────────────────────────────────────
-function WorkerTestSession({worker, selectedTests, onComplete}){
-  const [step,setStep]=useState(0); // index in selectedTests
+function WorkerTestSession({worker,selectedTests,onComplete}){
+  const [step,setStep]=useState(0);
   const [answers,setAnswers]=useState({});
   const [currentAnswers,setCurrentAnswers]=useState([]);
-  const [done,setDone]=useState(false);
-
   const allTests=[...selectedTests];
   const current=allTests[step];
   const isQuestionnaire=current&&QUESTIONNAIRES[current];
@@ -581,29 +457,19 @@ function WorkerTestSession({worker, selectedTests, onComplete}){
     const total=currentAnswers.reduce((s,a)=>s+(a??0),0);
     const apt=td.aptitud(total);
     const newAnswers={...answers,[current]:{total,aptitud:apt,answers:currentAnswers}};
-    setAnswers(newAnswers);
-    setCurrentAnswers([]);
-    if(step+1>=allTests.length){setDone(true);onComplete(newAnswers);}
+    setAnswers(newAnswers);setCurrentAnswers([]);
+    if(step+1>=allTests.length) onComplete(newAnswers);
     else setStep(s=>s+1);
   };
 
   const handleCognitiveComplete=(result)=>{
     const newAnswers={...answers,[current]:result};
     setAnswers(newAnswers);
-    if(step+1>=allTests.length){setDone(true);onComplete(newAnswers);}
+    if(step+1>=allTests.length) onComplete(newAnswers);
     else setStep(s=>s+1);
   };
 
-  if(done) return(
-    <div style={{textAlign:"center",padding:48,background:"#0f172a",borderRadius:20}}>
-      <p style={{fontSize:40,marginBottom:16}}>✅</p>
-      <h2 style={{color:"#f1f5f9",marginBottom:8}}>Evaluación completada</h2>
-      <p style={{color:"#64748b",fontSize:14}}>Los resultados fueron enviados al profesional responsable.</p>
-    </div>
-  );
-
   if(!current) return null;
-
   return(
     <div style={{maxWidth:560,margin:"0 auto"}}>
       <div style={{marginBottom:20}}>
@@ -615,7 +481,6 @@ function WorkerTestSession({worker, selectedTests, onComplete}){
           <div style={{width:`${(step/allTests.length)*100}%`,height:"100%",background:TEAL,borderRadius:99,transition:"width 0.4s"}}/>
         </div>
       </div>
-
       {isQuestionnaire&&(()=>{
         const td=QUESTIONNAIRES[current];
         const allAnswered=currentAnswers.length===td.questions.length&&currentAnswers.every(a=>a!==null&&a!==undefined);
@@ -629,13 +494,11 @@ function WorkerTestSession({worker, selectedTests, onComplete}){
               <p style={{color:"#94a3b8",fontSize:13,lineHeight:1.6,margin:0}}>{td.instructions}</p>
             </div>
             {td.questions.map((q,qi)=>(
-              <div key={qi} style={{background:"#0f172a",border:`1px solid ${currentAnswers[qi]!==undefined?TEAL+"55":"#1e293b"}`,borderRadius:14,padding:16,marginBottom:10,transition:"border-color 0.3s"}}>
+              <div key={qi} style={{background:"#0f172a",border:`1px solid ${currentAnswers[qi]!==undefined?TEAL+"55":"#1e293b"}`,borderRadius:14,padding:16,marginBottom:10}}>
                 <p style={{color:"#e2e8f0",fontSize:14,margin:"0 0 12px",lineHeight:1.5}}><span style={{color:TEAL,fontWeight:700,marginRight:8}}>{qi+1}.</span>{q}</p>
                 <div style={{display:"flex",flexDirection:"column",gap:6}}>
                   {td.options.map((opt,oi)=>(
-                    <button key={oi} onClick={()=>{const n=[...currentAnswers];n[qi]=opt.value;setCurrentAnswers(n);}} style={{background:currentAnswers[qi]===opt.value?TEAL+"33":"transparent",border:`1px solid ${currentAnswers[qi]===opt.value?TEAL:"#334155"}`,borderRadius:9,padding:"9px 14px",color:currentAnswers[qi]===opt.value?"#f1f5f9":"#94a3b8",cursor:"pointer",textAlign:"left",fontSize:13,transition:"all 0.2s",fontFamily:"inherit"}}>
-                      {opt.label}
-                    </button>
+                    <button key={oi} onClick={()=>{const n=[...currentAnswers];n[qi]=opt.value;setCurrentAnswers(n);}} style={{background:currentAnswers[qi]===opt.value?TEAL+"33":"transparent",border:`1px solid ${currentAnswers[qi]===opt.value?TEAL:"#334155"}`,borderRadius:9,padding:"9px 14px",color:currentAnswers[qi]===opt.value?"#f1f5f9":"#94a3b8",cursor:"pointer",textAlign:"left",fontSize:13,fontFamily:"inherit"}}>{opt.label}</button>
                   ))}
                 </div>
               </div>
@@ -648,7 +511,6 @@ function WorkerTestSession({worker, selectedTests, onComplete}){
           </div>
         );
       })()}
-
       {isCognitive&&(()=>{
         const td=COG_TESTS[current];
         return(
@@ -670,6 +532,15 @@ export default function Laboral({onBack, professional, supabase}){
   const [workers,setWorkers]=useState([]);
   const [dbLoading,setDbLoading]=useState(true);
 
+  // ── NUEVO: estado para profesionales ──
+  const [allProfessionals,setAllProfessionals]=useState([]);
+  const [showProfesionalesModal,setShowProfesionalesModal]=useState(false);
+  const [newProfForm,setNewProfForm]=useState({nombre:"",apellido:"",especialidad:"Médico/a Laboral",matricula:"",email:"",password:""});
+  const [profFormLoading,setProfFormLoading]=useState(false);
+  const [profFormMsg,setProfFormMsg]=useState(null);
+  // ── NUEVO: estado para confirmar eliminación ──
+  const [confirmDelete,setConfirmDelete]=useState(null);
+
   useEffect(()=>{
     if(!supabase||!professional){setDbLoading(false);return;}
     let mounted=true;
@@ -685,12 +556,16 @@ export default function Laboral({onBack, professional, supabase}){
           }));
           if(mounted) setWorkers(wsWithEvals);
         }
+        // Cargar todos los profesionales
+        const {data:profs}=await supabase.from("professionals").select("id,nombre,apellido,especialidad,matricula,email").order("created_at",{ascending:true});
+        if(mounted&&profs) setAllProfessionals(profs);
       } catch(err){console.error("Load error:",err);}
       if(mounted) setDbLoading(false);
     };
     load();
     return ()=>{mounted=false;};
   },[professional]);
+
   const [view,setView]=useState("dashboard");
   const [selectedWorkerId,setSelectedWorkerId]=useState(null);
   const [showNewWorker,setShowNewWorker]=useState(false);
@@ -699,15 +574,24 @@ export default function Laboral({onBack, professional, supabase}){
   const [selectedTests,setSelectedTests]=useState([]);
   const [simulatingSession,setSimulatingSession]=useState(null);
   const [report,setReport]=useState(null);
-  const [reportLoading,setReportLoading]=useState(false);
   const [pdfLoading,setPdfLoading]=useState(false);
   const [profProfile,setProfProfile]=useState({tipo:professional?.especialidad||"Médico/a Laboral",nombre:professional?(professional.nombre+" "+professional.apellido):"",matricula:professional?.matricula||""});
-  const profName = profProfile.nombre ? `${profProfile.tipo} ${profProfile.nombre}${profProfile.matricula?" — Mat. "+profProfile.matricula:""}` : "";
+  const profName=profProfile.nombre?`${profProfile.tipo} ${profProfile.nombre}${profProfile.matricula?" — Mat. "+profProfile.matricula:""}` : "";
   const [showProfModal,setShowProfModal]=useState(false);
   const [reportStatus,setReportStatus]=useState({});
-  const [groupFilter,setGroupFilter]=useState("all");
 
   const currentWorker=selectedWorkerId?workers.find(w=>w.id===selectedWorkerId):null;
+  const allTestDefs={...QUESTIONNAIRES,...Object.fromEntries(Object.entries(COG_TESTS).map(([k,v])=>([k,{...v,maxScore:null}])))};
+  const allEvals=workers.flatMap(w=>w.evaluations.map(e=>({...e,worker:w})));
+  const aptCounts={apto:0,restriccion:0,no_apto:0};
+  allEvals.forEach(e=>{const a=calcFinalAptitud(e.tests);aptCounts[a]++;});
+
+  function calcFinalAptitud(tests){
+    const results=Object.values(tests);
+    if(results.some(r=>r.aptitud==="no_apto")) return "no_apto";
+    if(results.some(r=>r.aptitud==="restriccion")) return "restriccion";
+    return "apto";
+  }
 
   const handleSessionComplete=async(workerId,tests,results)=>{
     const today=new Date().toISOString().slice(0,10);
@@ -715,44 +599,66 @@ export default function Laboral({onBack, professional, supabase}){
     let newEval={id:"ev"+Date.now(),date:today,tests:results};
     if(supabase&&professional){
       const {data}=await supabase.from("labor_evaluations").insert({
-        worker_id:workerId,professional_id:professional.id,
-        date:today,tests:results,final_aptitud:final
+        worker_id:workerId,professional_id:professional.id,date:today,tests:results,final_aptitud:final
       }).select().single();
       if(data) newEval={...data,tests:data.tests||results};
     }
-    setWorkers(prev=>prev.map(w=>w.id===workerId?{...w,evaluations:[...w.evaluations,newEval]}:w));
+    setWorkers(prev=>prev.map(w=>w.id===workerId?{...w,evaluations:[newEval,...w.evaluations]}:w));
     setSimulatingSession(null);setView("worker");
-  };
-
-  const calcFinalAptitud=(tests)=>{
-    const results=Object.values(tests);
-    if(results.some(r=>r.aptitud==="no_apto")) return "no_apto";
-    if(results.some(r=>r.aptitud==="restriccion")) return "restriccion";
-    return "apto";
   };
 
   const handleGenerateReport=async(worker,ev)=>{
     const final=calcFinalAptitud(ev.tests);
     setReport({loading:true,text:null,ev,worker,finalAptitud:final});
     setReportStatus(s=>({...s,[ev.id]:s[ev.id]||"generado"}));
-    try{
-      const text=await generateLaboralReport(worker,ev,final);
-      setReport(r=>({...r,loading:false,text}));
-    }catch{setReport(r=>({...r,loading:false,text:"Error al generar el informe."}));}
+    try{const text=await generateLaboralReport(worker,ev,final);setReport(r=>({...r,loading:false,text}));}
+    catch{setReport(r=>({...r,loading:false,text:"Error al generar el informe."}));}
   };
 
   const handleAddWorker=async()=>{
     if(!newForm.name) return;
     if(supabase&&professional){
-      const {data}=await supabase.from("workers").insert({
-        professional_id:professional.id,...newForm
-      }).select().single();
+      const {data}=await supabase.from("workers").insert({professional_id:professional.id,...newForm}).select().single();
       if(data) setWorkers(prev=>[{...data,evaluations:[]},...prev]);
     } else {
       setWorkers(prev=>[...prev,{id:"w"+Date.now(),...newForm,evaluations:[]}]);
     }
     setNewForm({name:"",dni:"",empresa:"",puesto:"",turno:"",legajo:"",whatsapp:""});
     setShowNewWorker(false);
+  };
+
+  // ── NUEVO: eliminar trabajador ──
+  const handleDeleteWorker=async(workerId)=>{
+    if(supabase){
+      await supabase.from("labor_evaluations").delete().eq("worker_id",workerId);
+      await supabase.from("workers").delete().eq("id",workerId);
+    }
+    setWorkers(prev=>prev.filter(w=>w.id!==workerId));
+    if(selectedWorkerId===workerId){setSelectedWorkerId(null);setView("dashboard");}
+    setConfirmDelete(null);
+  };
+
+  // ── NUEVO: agregar profesional ──
+  const handleAddProfessional=async()=>{
+    if(!newProfForm.nombre||!newProfForm.apellido||!newProfForm.email||!newProfForm.password){
+      setProfFormMsg({type:"error",text:"Completá nombre, apellido, email y contraseña."});return;
+    }
+    setProfFormLoading(true);setProfFormMsg(null);
+    try{
+      const {data,error}=await supabase.auth.signUp({email:newProfForm.email,password:newProfForm.password});
+      if(error){setProfFormMsg({type:"error",text:error.message});setProfFormLoading(false);return;}
+      const userId=data?.user?.id;
+      if(userId){
+        const {data:profData}=await supabase.from("professionals").insert({
+          id:userId,nombre:newProfForm.nombre,apellido:newProfForm.apellido,
+          especialidad:newProfForm.especialidad,matricula:newProfForm.matricula,email:newProfForm.email
+        }).select().single();
+        if(profData) setAllProfessionals(prev=>[...prev,profData]);
+      }
+      setProfFormMsg({type:"success",text:`Profesional ${newProfForm.nombre} ${newProfForm.apellido} creado. Debe confirmar su email.`});
+      setNewProfForm({nombre:"",apellido:"",especialidad:"Médico/a Laboral",matricula:"",email:"",password:""});
+    }catch(e){setProfFormMsg({type:"error",text:"Error al crear profesional."});}
+    setProfFormLoading(false);
   };
 
   if(simulatingSession) return(
@@ -779,21 +685,87 @@ export default function Laboral({onBack, professional, supabase}){
     ghost:{background:"transparent",color:"#5DCAA5",border:`1px solid ${TEAL_BORDER}`,borderRadius:9,padding:"7px 14px",fontSize:12,cursor:"pointer",fontFamily:"inherit"},
     input:{width:"100%",background:"#041a18",border:`1px solid ${TEAL_BORDER}`,borderRadius:9,padding:"9px 12px",color:"#e2e8f0",fontSize:13,fontFamily:"inherit",boxSizing:"border-box"},
     label:{fontSize:10,fontWeight:700,letterSpacing:2,color:"#14B8A680",textTransform:"uppercase"},
+    danger:{background:"transparent",color:"#ef4444",border:"1px solid #ef444455",borderRadius:8,padding:"5px 10px",fontSize:11,cursor:"pointer",fontFamily:"inherit"},
   };
-
-  // All available tests
-  const allTestIds=[...Object.keys(QUESTIONNAIRES),...Object.keys(COG_TESTS)];
-  const allTestDefs={...QUESTIONNAIRES,...Object.fromEntries(Object.entries(COG_TESTS).map(([k,v])=>([k,{...v,maxScore:null,aptitud:null}])))};
-
-  // Stats for dashboard
-  const allEvals=workers.flatMap(w=>w.evaluations.map(e=>({...e,worker:w})));
-  const aptCounts={apto:0,restriccion:0,no_apto:0};
-  allEvals.forEach(e=>{const a=calcFinalAptitud(e.tests);aptCounts[a]++;});
 
   return(
     <div style={S.app}>
       <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet"/>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}} @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}} *{box-sizing:border-box}`}</style>
+
+      {/* ── MODAL CONFIRMAR ELIMINACIÓN ── */}
+      {confirmDelete&&(
+        <div style={{position:"fixed",inset:0,background:"#000c",display:"flex",alignItems:"center",justifyContent:"center",zIndex:300}}>
+          <div style={{...S.card,maxWidth:380,width:"90%",animation:"fadeIn 0.2s ease",border:"1px solid #ef444444"}}>
+            <h3 style={{color:"#ef4444",margin:"0 0 8px",fontFamily:"'DM Serif Display'"}}>Eliminar trabajador</h3>
+            <p style={{color:"#94a3b8",fontSize:14,marginBottom:6}}>¿Estás seguro que querés eliminar a <strong style={{color:"#e2e8f0"}}>{confirmDelete.name}</strong>?</p>
+            <p style={{color:"#64748b",fontSize:12,marginBottom:20}}>Se eliminarán también todas sus evaluaciones. Esta acción no se puede deshacer.</p>
+            <div style={{display:"flex",gap:8}}>
+              <button style={{...S.ghost,flex:1}} onClick={()=>setConfirmDelete(null)}>Cancelar</button>
+              <button style={{...S.btn("#ef4444"),flex:1}} onClick={()=>handleDeleteWorker(confirmDelete.id)}>Sí, eliminar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL GESTIÓN DE PROFESIONALES ── */}
+      {showProfesionalesModal&&(
+        <div style={{position:"fixed",inset:0,background:"#000c",display:"flex",alignItems:"center",justifyContent:"center",zIndex:300,padding:20}}>
+          <div style={{...S.card,maxWidth:560,width:"100%",maxHeight:"90vh",overflow:"auto",animation:"fadeIn 0.2s ease"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+              <h3 style={{color:"#f1f5f9",margin:0,fontFamily:"'DM Serif Display'",fontSize:22}}>Gestión de profesionales</h3>
+              <button style={{...S.ghost,padding:"4px 10px"}} onClick={()=>{setShowProfesionalesModal(false);setProfFormMsg(null);}}>✕</button>
+            </div>
+            <div style={{marginBottom:24}}>
+              <p style={{...S.label,marginBottom:10}}>Profesionales registrados ({allProfessionals.length})</p>
+              {allProfessionals.length===0?(
+                <p style={{color:"#475569",fontSize:13}}>Ningún profesional registrado aún.</p>
+              ):(
+                allProfessionals.map(p=>(
+                  <div key={p.id} style={{background:"#041a18",border:`1px solid ${TEAL_BORDER}`,borderRadius:10,padding:"12px 14px",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                    <div>
+                      <p style={{margin:"0 0 2px",fontSize:13,fontWeight:600,color:"#e2e8f0"}}>{p.nombre} {p.apellido}</p>
+                      <p style={{margin:0,fontSize:11,color:TEAL}}>{p.especialidad}{p.matricula?" · Mat. "+p.matricula:""}</p>
+                      <p style={{margin:0,fontSize:11,color:"#475569"}}>{p.email}</p>
+                    </div>
+                    {p.id===professional?.id&&(
+                      <span style={{background:"#22c55e22",color:"#22c55e",border:"1px solid #22c55e44",borderRadius:6,padding:"2px 8px",fontSize:10,fontWeight:700}}>Vos</span>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+            <div style={{borderTop:`1px solid ${TEAL_BORDER}`,paddingTop:20}}>
+              <p style={{...S.label,marginBottom:14}}>Agregar nuevo profesional</p>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
+                <div><p style={{...S.label,marginBottom:5}}>Nombre</p><input value={newProfForm.nombre} onChange={e=>setNewProfForm(p=>({...p,nombre:e.target.value}))} placeholder="María" style={S.input}/></div>
+                <div><p style={{...S.label,marginBottom:5}}>Apellido</p><input value={newProfForm.apellido} onChange={e=>setNewProfForm(p=>({...p,apellido:e.target.value}))} placeholder="García" style={S.input}/></div>
+              </div>
+              <div style={{marginBottom:10}}>
+                <p style={{...S.label,marginBottom:5}}>Especialidad</p>
+                <select value={newProfForm.especialidad} onChange={e=>setNewProfForm(p=>({...p,especialidad:e.target.value}))} style={{...S.input}}>
+                  {["Médico/a Laboral","Médico/a","Psiquiatra","Psicólogo/a","Otro"].map(e=><option key={e}>{e}</option>)}
+                </select>
+              </div>
+              <div style={{marginBottom:10}}><p style={{...S.label,marginBottom:5}}>Matrícula (opcional)</p><input value={newProfForm.matricula} onChange={e=>setNewProfForm(p=>({...p,matricula:e.target.value}))} placeholder="MP 12345" style={S.input}/></div>
+              <div style={{marginBottom:10}}><p style={{...S.label,marginBottom:5}}>Email (usuario de acceso)</p><input type="email" value={newProfForm.email} onChange={e=>setNewProfForm(p=>({...p,email:e.target.value}))} placeholder="colega@hospital.com" style={S.input}/></div>
+              <div style={{marginBottom:16}}>
+                <p style={{...S.label,marginBottom:5}}>Contraseña inicial</p>
+                <input type="password" value={newProfForm.password} onChange={e=>setNewProfForm(p=>({...p,password:e.target.value}))} placeholder="Mínimo 6 caracteres" style={S.input}/>
+                <p style={{fontSize:11,color:"#475569",marginTop:4}}>El profesional recibirá un email de confirmación.</p>
+              </div>
+              {profFormMsg&&(
+                <div style={{background:profFormMsg.type==="error"?"#1a0a0a":"#0a1a0a",border:`1px solid ${profFormMsg.type==="error"?"#7f1d1d":"#166534"}`,borderRadius:8,padding:"10px 14px",marginBottom:14}}>
+                  <p style={{margin:0,fontSize:13,color:profFormMsg.type==="error"?"#fca5a5":"#86efac"}}>{profFormMsg.text}</p>
+                </div>
+              )}
+              <button onClick={handleAddProfessional} disabled={profFormLoading} style={{...S.btn(),width:"100%",opacity:profFormLoading?0.6:1}}>
+                {profFormLoading?"Creando cuenta...":"+ Agregar profesional"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* REPORT MODAL */}
       {report&&(
@@ -856,7 +828,7 @@ export default function Laboral({onBack, professional, supabase}){
                   {ids.map(id=>{
                     const td=allTestDefs[id];const checked=selectedTests.includes(id);
                     return(
-                      <button key={id} onClick={()=>setSelectedTests(t=>t.includes(id)?t.filter(x=>x!==id):[...t,id])} style={{display:"flex",alignItems:"center",gap:10,width:"100%",background:checked?TEAL+"22":"transparent",border:`1px solid ${checked?TEAL:TEAL_BORDER}`,borderRadius:9,padding:"9px 12px",marginBottom:6,cursor:"pointer",fontFamily:"inherit",transition:"all 0.2s"}}>
+                      <button key={id} onClick={()=>setSelectedTests(t=>t.includes(id)?t.filter(x=>x!==id):[...t,id])} style={{display:"flex",alignItems:"center",gap:10,width:"100%",background:checked?TEAL+"22":"transparent",border:`1px solid ${checked?TEAL:TEAL_BORDER}`,borderRadius:9,padding:"9px 12px",marginBottom:6,cursor:"pointer",fontFamily:"inherit"}}>
                         <span style={{fontSize:16}}>{td.icon||"📋"}</span>
                         <div style={{textAlign:"left"}}>
                           <p style={{margin:0,fontSize:13,color:checked?"#f1f5f9":"#94a3b8",fontWeight:checked?600:400}}>{td.name}</p>
@@ -907,44 +879,8 @@ export default function Laboral({onBack, professional, supabase}){
             <div style={{marginBottom:12}}>
               <p style={{...S.label,marginBottom:6}}>Especialidad</p>
               <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                {["Médico/a Laboral","Psiquiatra","Psicólogo/a","Médico/a Clínico/a","Otro"].map(t=>(
-                  <button key={t} onClick={()=>setProfProfile(p=>({...p,tipo:t}))} style={{background:profProfile.tipo===t?TEAL+"33":"transparent",border:`1px solid ${profProfile.tipo===t?TEAL:TEAL_BORDER}`,borderRadius:8,padding:"6px 12px",color:profProfile.tipo===t?"#5DCAA5":"#64748b",cursor:"pointer",fontSize:12,fontFamily:"inherit"}}>{t}</button>
-                ))}
-              </div>
-            </div>
-            <div style={{marginBottom:12}}>
-              <p style={{...S.label,marginBottom:6}}>Nombre y apellido</p>
-              <input placeholder="Ej: María García" value={profProfile.nombre} onChange={e=>setProfProfile(p=>({...p,nombre:e.target.value}))} style={S.input}/>
-            </div>
-            <div style={{marginBottom:20}}>
-              <p style={{...S.label,marginBottom:6}}>Matrícula</p>
-              <input placeholder="Ej: MP 12345 o MN 67890" value={profProfile.matricula} onChange={e=>setProfProfile(p=>({...p,matricula:e.target.value}))} style={S.input}/>
-            </div>
-            {profProfile.nombre&&(
-              <div style={{background:"#041a18",borderRadius:9,padding:"10px 14px",border:`1px solid ${TEAL_BORDER}`,marginBottom:16}}>
-                <p style={{...S.label,margin:"0 0 4px"}}>Vista previa en informe</p>
-                <p style={{margin:0,fontSize:13,color:"#e2e8f0"}}>{profProfile.tipo} {profProfile.nombre}{profProfile.matricula?" — Mat. "+profProfile.matricula:""}</p>
-              </div>
-            )}
-            <div style={{display:"flex",gap:8}}>
-              <button style={{...S.ghost,flex:1}} onClick={()=>setShowProfModal(false)}>Cancelar</button>
-              <button style={{...S.btn(),flex:1}} onClick={()=>setShowProfModal(false)}>Guardar</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* PROFESSIONAL PROFILE MODAL */}
-      {showProfModal&&(
-        <div style={{position:"fixed",inset:0,background:"#000a",display:"flex",alignItems:"center",justifyContent:"center",zIndex:300}}>
-          <div style={{...S.card,maxWidth:400,width:"90%",animation:"fadeIn 0.2s ease"}}>
-            <h3 style={{color:"#f1f5f9",margin:"0 0 4px",fontFamily:"'DM Serif Display'"}}>Perfil del profesional</h3>
-            <p style={{color:"#64748b",fontSize:13,marginBottom:20}}>Estos datos aparecerán en todos los informes firmados.</p>
-            <div style={{marginBottom:12}}>
-              <p style={{...S.label,marginBottom:6}}>Especialidad</p>
-              <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
                 {["Médico/a Laboral","Médico/a","Psiquiatra","Psicólogo/a","Otro"].map(t=>(
-                  <button key={t} onClick={()=>setProfProfile(p=>({...p,tipo:t}))} style={{background:profProfile.tipo===t?TEAL+"33":"transparent",border:`1px solid ${profProfile.tipo===t?TEAL:TEAL_BORDER}`,borderRadius:8,padding:"6px 14px",color:profProfile.tipo===t?"#5DCAA5":"#64748b",cursor:"pointer",fontSize:12,fontFamily:"inherit"}}>{t}</button>
+                  <button key={t} onClick={()=>setProfProfile(p=>({...p,tipo:t}))} style={{background:profProfile.tipo===t?TEAL+"33":"transparent",border:`1px solid ${profProfile.tipo===t?TEAL:TEAL_BORDER}`,borderRadius:8,padding:"6px 12px",color:profProfile.tipo===t?"#5DCAA5":"#64748b",cursor:"pointer",fontSize:12,fontFamily:"inherit"}}>{t}</button>
                 ))}
               </div>
             </div>
@@ -954,11 +890,11 @@ export default function Laboral({onBack, professional, supabase}){
             </div>
             <div style={{marginBottom:20}}>
               <p style={{...S.label,marginBottom:6}}>Matrícula</p>
-              <input placeholder="Ej: MP 12345 o MN 67890" value={profProfile.matricula} onChange={e=>setProfProfile(p=>({...p,matricula:e.target.value}))} style={S.input}/>
+              <input placeholder="Ej: MP 12345" value={profProfile.matricula} onChange={e=>setProfProfile(p=>({...p,matricula:e.target.value}))} style={S.input}/>
             </div>
             {profProfile.nombre&&(
               <div style={{background:"#041a18",borderRadius:9,padding:"10px 14px",border:`1px solid ${TEAL_BORDER}`,marginBottom:16}}>
-                <p style={{...S.label,margin:"0 0 4px"}}>Vista previa en informe</p>
+                <p style={{...S.label,margin:"0 0 4px"}}>Vista previa</p>
                 <p style={{margin:0,fontSize:13,color:"#e2e8f0"}}>{profProfile.tipo} {profProfile.nombre}{profProfile.matricula?" — Mat. "+profProfile.matricula:""}</p>
               </div>
             )}
@@ -994,19 +930,37 @@ export default function Laboral({onBack, professional, supabase}){
           </svg>
           <p style={{fontSize:10,fontWeight:600,letterSpacing:3,color:"#14B8A680",textTransform:"uppercase",margin:0}}>medicina laboral</p>
         </div>
+
         {[{id:"dashboard",label:"Panel",icon:"◈"},{id:"tests",label:"Tests disponibles",icon:"◎"},{id:"stats",label:"Estadísticas",icon:"◉"}].map(item=>(
           <button key={item.id} onClick={()=>setView(item.id)} style={{background:view===item.id?"#0d2e2b":"transparent",border:"none",borderRadius:9,padding:"9px 12px",color:view===item.id?"#5DCAA5":"#4B8A7A",cursor:"pointer",textAlign:"left",fontSize:13,fontFamily:"inherit",display:"flex",gap:9,alignItems:"center",marginBottom:3,width:"100%"}}>
             <span>{item.icon}</span>{item.label}
           </button>
         ))}
+
+        {/* ── NUEVO: botón profesionales ── */}
+        <button onClick={()=>setShowProfesionalesModal(true)} style={{background:"transparent",border:"none",borderRadius:9,padding:"9px 12px",color:"#4B8A7A",cursor:"pointer",textAlign:"left",fontSize:13,fontFamily:"inherit",display:"flex",gap:9,alignItems:"center",marginBottom:3,width:"100%"}}>
+          <span>👥</span>Profesionales
+        </button>
+
         <div style={{margin:"18px 0 8px"}}><p style={{...S.label,paddingLeft:12,marginBottom:7}}>Trabajadores</p></div>
+
         {workers.map(w=>(
-          <button key={w.id} onClick={()=>{setSelectedWorkerId(w.id);setView("worker");}} style={{background:(view==="worker"&&selectedWorkerId===w.id)?"#0d2e2b":"transparent",border:"none",borderRadius:9,padding:"7px 12px",color:(view==="worker"&&selectedWorkerId===w.id)?"#5DCAA5":"#4B8A7A",cursor:"pointer",textAlign:"left",fontSize:12,fontFamily:"inherit",marginBottom:2,width:"100%",display:"flex",alignItems:"center",gap:9}}>
-            <span style={{width:22,height:22,borderRadius:"50%",background:"#0d2e2b",display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:TEAL,flexShrink:0}}>{w.name.split(" ").map(x=>x[0]).join("").slice(0,2)}</span>
-            <span style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{w.name}</span>
-          </button>
+          <div key={w.id} style={{display:"flex",alignItems:"center",gap:4,marginBottom:2}}>
+            <button onClick={()=>{setSelectedWorkerId(w.id);setView("worker");}} style={{background:(view==="worker"&&selectedWorkerId===w.id)?"#0d2e2b":"transparent",border:"none",borderRadius:9,padding:"7px 8px",color:(view==="worker"&&selectedWorkerId===w.id)?"#5DCAA5":"#4B8A7A",cursor:"pointer",textAlign:"left",fontSize:12,fontFamily:"inherit",flex:1,display:"flex",alignItems:"center",gap:8,minWidth:0}}>
+              <span style={{width:22,height:22,borderRadius:"50%",background:"#0d2e2b",display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:TEAL,flexShrink:0}}>{w.name.split(" ").map(x=>x[0]).join("").slice(0,2)}</span>
+              <span style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{w.name}</span>
+            </button>
+            {/* ── NUEVO: botón eliminar ── */}
+            <button onClick={()=>setConfirmDelete(w)} title="Eliminar trabajador" style={{background:"transparent",border:"none",color:"#334155",cursor:"pointer",padding:"4px 6px",fontSize:13,borderRadius:6,flexShrink:0}}
+              onMouseEnter={e=>e.target.style.color="#ef4444"}
+              onMouseLeave={e=>e.target.style.color="#334155"}>
+              ✕
+            </button>
+          </div>
         ))}
+
         <button onClick={()=>setShowNewWorker(true)} style={{background:"transparent",border:`1px dashed ${TEAL_BORDER}`,borderRadius:9,padding:"7px 12px",color:"#14B8A680",cursor:"pointer",textAlign:"left",fontSize:12,fontFamily:"inherit",marginTop:6,width:"100%"}}>+ Nuevo trabajador</button>
+
         <div style={{marginTop:"auto",paddingTop:20,borderTop:`1px solid ${TEAL_BORDER}`}}>
           <button onClick={()=>setShowProfModal(true)} style={{width:"100%",background:"transparent",border:`1px solid ${TEAL_BORDER}`,borderRadius:9,padding:"10px 12px",cursor:"pointer",textAlign:"left",fontFamily:"inherit",display:"flex",alignItems:"center",gap:8}}>
             <div style={{width:28,height:28,borderRadius:"50%",background:TEAL_DIM,border:`1px solid ${TEAL_BORDER}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,flexShrink:0}}>👤</div>
@@ -1020,7 +974,6 @@ export default function Laboral({onBack, professional, supabase}){
       {/* MAIN */}
       <div style={S.main}>
 
-        {/* DASHBOARD */}
         {view==="dashboard"&&(
           <div style={{animation:"fadeIn 0.3s ease"}}>
             <h1 style={{fontFamily:"'DM Serif Display'",fontSize:34,margin:"0 0 4px",color:"#f1f5f9"}}>Medicina Laboral</h1>
@@ -1049,7 +1002,6 @@ export default function Laboral({onBack, professional, supabase}){
           </div>
         )}
 
-        {/* TESTS */}
         {view==="tests"&&(
           <div style={{animation:"fadeIn 0.3s ease"}}>
             <h1 style={{fontFamily:"'DM Serif Display'",fontSize:34,margin:"0 0 4px",color:"#f1f5f9"}}>Tests disponibles</h1>
@@ -1060,21 +1012,18 @@ export default function Laboral({onBack, professional, supabase}){
                 <div key={group} style={{marginBottom:28}}>
                   <h2 style={{color:"#5DCAA5",fontSize:15,fontWeight:700,marginBottom:14}}>{group}</h2>
                   <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:12}}>
-                    {ids.map(id=>{
-                      const td=allTestDefs[id];
-                      return(
-                        <div key={id} style={{...S.card,borderTopWidth:3,borderTopColor:TEAL}}>
-                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"start",marginBottom:10}}>
-                            <span style={{fontSize:22}}>{td.icon||"📋"}</span>
-                            <span style={{fontSize:11,color:"#475569"}}>{td.duration}</span>
-                          </div>
-                          <p style={{color:"#f1f5f9",fontSize:14,fontWeight:600,margin:"0 0 4px"}}>{td.fullName||td.name}</p>
-                          <p style={{color:TEAL,fontSize:12,margin:"0 0 8px"}}>{td.area}</p>
-                          {td.maxScore&&<p style={{color:"#475569",fontSize:12,margin:0}}>{td.questions?.length} preguntas · máx. {td.maxScore} pts</p>}
-                          {!td.maxScore&&<p style={{color:"#475569",fontSize:12,margin:0}}>Test interactivo · resultado automático</p>}
+                    {ids.map(id=>{const td=allTestDefs[id];return(
+                      <div key={id} style={{...S.card,borderTopWidth:3,borderTopColor:TEAL}}>
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"start",marginBottom:10}}>
+                          <span style={{fontSize:22}}>{td.icon||"📋"}</span>
+                          <span style={{fontSize:11,color:"#475569"}}>{td.duration}</span>
                         </div>
-                      );
-                    })}
+                        <p style={{color:"#f1f5f9",fontSize:14,fontWeight:600,margin:"0 0 4px"}}>{td.fullName||td.name}</p>
+                        <p style={{color:TEAL,fontSize:12,margin:"0 0 8px"}}>{td.area}</p>
+                        {td.maxScore&&<p style={{color:"#475569",fontSize:12,margin:0}}>{td.questions?.length} preguntas · máx. {td.maxScore} pts</p>}
+                        {!td.maxScore&&<p style={{color:"#475569",fontSize:12,margin:0}}>Test interactivo · resultado automático</p>}
+                      </div>
+                    );})}
                   </div>
                 </div>
               );
@@ -1082,18 +1031,16 @@ export default function Laboral({onBack, professional, supabase}){
           </div>
         )}
 
-        {/* STATS */}
         {view==="stats"&&(
           <div style={{animation:"fadeIn 0.3s ease"}}>
             <h1 style={{fontFamily:"'DM Serif Display'",fontSize:34,margin:"0 0 4px",color:"#f1f5f9"}}>Estadísticas grupales</h1>
             <p style={{color:"#4B8A7A",fontSize:13,marginBottom:24}}>Distribución de aptitud por empresa y turno</p>
             <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14,marginBottom:24}}>
-              {Object.entries(aptCounts).map(([k,v])=>{
-                const apt=APTITUD[k];
-                return(<div key={k} style={S.card}><p style={{...S.label,marginBottom:8}}>{apt.label}</p><p style={{fontSize:36,fontFamily:"'DM Serif Display'",color:apt.color,margin:0}}>{v}</p></div>);
+              {Object.entries(aptCounts).map(([k,v])=>{const apt=APTITUD[k];return(
+                <div key={k} style={S.card}><p style={{...S.label,marginBottom:8}}>{apt.label}</p><p style={{fontSize:36,fontFamily:"'DM Serif Display'",color:apt.color,margin:0}}>{v}</p></div>
+              );
               })}
             </div>
-            {/* By company */}
             {[...new Set(workers.map(w=>w.empresa))].map(empresa=>{
               const empWorkers=workers.filter(w=>w.empresa===empresa);
               const empEvals=empWorkers.flatMap(w=>w.evaluations);
@@ -1128,19 +1075,20 @@ export default function Laboral({onBack, professional, supabase}){
           </div>
         )}
 
-        {/* WORKER DETAIL */}
         {view==="worker"&&currentWorker&&(
           <div style={{animation:"fadeIn 0.3s ease"}}>
             <div style={{display:"flex",alignItems:"start",justifyContent:"space-between",marginBottom:24,flexWrap:"wrap",gap:14}}>
               <div>
                 <p style={{...S.label,marginBottom:3}}>Trabajador</p>
                 <h1 style={{fontFamily:"'DM Serif Display'",fontSize:32,margin:"0 0 6px",color:"#f1f5f9"}}>{currentWorker.name}</h1>
-                <div style={{display:"flex",gap:14,flexWrap:"wrap"}}>
+                <div style={{display:"flex",gap:14,flexWrap:"wrap",alignItems:"center"}}>
                   <span style={{color:"#4B8A7A",fontSize:13}}>🏭 {currentWorker.empresa}</span>
                   <span style={{color:"#4B8A7A",fontSize:13}}>💼 {currentWorker.puesto}</span>
                   <span style={{color:"#4B8A7A",fontSize:13}}>🌙 Turno {currentWorker.turno}</span>
                   {currentWorker.legajo&&<span style={{color:"#4B8A7A",fontSize:13}}>Legajo: {currentWorker.legajo}</span>}
                   {currentWorker.dni&&<span style={{color:"#4B8A7A",fontSize:13}}>DNI: {currentWorker.dni}</span>}
+                  {/* ── NUEVO: botón eliminar en vista trabajador ── */}
+                  <button onClick={()=>setConfirmDelete(currentWorker)} style={S.danger}>🗑 Eliminar trabajador</button>
                 </div>
               </div>
               <button style={S.btn()} onClick={()=>setShowAssign(currentWorker)}>+ Nueva evaluación</button>
@@ -1171,7 +1119,7 @@ export default function Laboral({onBack, professional, supabase}){
                         const testApt=APTITUD[result.aptitud];
                         return(
                           <div key={testId} style={{background:"#041a18",border:`1px solid ${TEAL_BORDER}`,borderRadius:10,padding:"10px 12px"}}>
-                            <div style={{display:"flex",justify:"space-between",alignItems:"center",marginBottom:4}}>
+                            <div style={{display:"flex",alignItems:"center",marginBottom:4}}>
                               <span style={{fontSize:14}}>{td.icon||"📋"}</span>
                               <span style={{marginLeft:"auto",fontSize:11,fontWeight:700,color:testApt?.color}}>{testApt?.label}</span>
                             </div>
