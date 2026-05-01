@@ -195,13 +195,19 @@ function PublicTestScreen({ testId, pid }) {
     load();
   }, [pid]);
 
-  const handleComplete = async (answers, total) => {
-    // Guardar evaluación en Supabase sin necesitar usuario logueado
+const handleComplete = async (answers, total) => {
     const today = new Date().toISOString().slice(0, 10);
     try {
+      // Buscar el professional_id del paciente
+      const { data: patientData } = await supabase
+        .from("patients")
+        .select("professional_id")
+        .eq("id", pid)
+        .maybeSingle();
+
       await supabase.from("evaluations").insert({
         patient_id: pid,
-        professional_id: null, // se llena desde el lado del profesional
+        professional_id: patientData?.professional_id || null,
         test_id: testId,
         date: today,
         answers: answers,
@@ -212,7 +218,6 @@ function PublicTestScreen({ testId, pid }) {
     }
     setCompleted(true);
   };
-
   if (loading) return (
     <div style={{
       minHeight: "100vh", background: "#060b18", display: "flex",
