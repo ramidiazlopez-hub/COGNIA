@@ -104,44 +104,21 @@ const TESTS = {
     questions:["¿Se provoca el vómito porque se siente incómodamente lleno/a?","¿Le preocupa haber perdido el control sobre cuánto come?","¿Ha perdido más de 6 kg en 3 meses?","¿Cree que está gordo/a cuando otros dicen que está delgado/a?","¿La comida domina su vida?"],
     maxScore:5, score:(t)=>t<=1?{level:"Sin indicadores",color:"#22c55e",desc:"Sin indicadores"}:{level:"Posible TCA",color:"#ef4444",desc:"Evaluación especializada recomendada"} },
   edeq:{ id:"edeq",name:"EDE-Q",fullName:"Eating Disorder Examination Questionnaire (breve)",category:"alimentaria",duration:"5-7 min",
-    instructions:"Las siguientes preguntas se refieren a los últimos 28 días. Seleccione la respuesta que mejor describe su experiencia.",
+    instructions:"Las siguientes preguntas se refieren a los últimos 28 días.",
     options:[{label:"Ningún día",value:0},{label:"1-5 días",value:1},{label:"6-12 días",value:2},{label:"13-15 días",value:3},{label:"16-22 días",value:4},{label:"23-27 días",value:5},{label:"Todos los días",value:6}],
     questions:["¿Intentó limitar la cantidad de alimentos para influir en su figura o peso?","¿Pasó largos períodos sin comer para influir en su figura o peso?","¿Intentó excluir alimentos de su dieta para influir en su figura o peso?","¿Intentó seguir reglas sobre su alimentación para influir en su figura o peso?","¿Deseó tener el estómago vacío?","¿Pensó que sería mejor no comer?","¿Comió en secreto?","¿Se sintió culpable después de comer?"],
-    maxScore:48,
-    score:(t)=>t<=12?{level:"Sin alteración",color:"#22c55e",desc:"Sin alteración significativa"}:t<=24?{level:"Leve",color:"#86efac",desc:"Monitoreo recomendado"}:t<=36?{level:"Moderado",color:"#fbbf24",desc:"Evaluación especializada recomendada"}:{level:"Severo",color:"#ef4444",desc:"TCA probable — derivación urgente"} },
+    maxScore:48, score:(t)=>t<=12?{level:"Sin alteración",color:"#22c55e",desc:"Sin alteración significativa"}:t<=24?{level:"Leve",color:"#86efac",desc:"Monitoreo recomendado"}:t<=36?{level:"Moderado",color:"#fbbf24",desc:"Evaluación especializada recomendada"}:{level:"Severo",color:"#ef4444",desc:"TCA probable — derivación urgente"} },
   ybocs:{ id:"ybocs",name:"Y-BOCS",fullName:"Yale-Brown Obsessive Compulsive Scale (breve)",category:"toc",duration:"5-8 min",
     instructions:"Las siguientes preguntas evalúan la gravedad de los pensamientos obsesivos y comportamientos compulsivos en la última semana.",
     options:[{label:"Ninguno",value:0},{label:"Leve",value:1},{label:"Moderado",value:2},{label:"Severo",value:3},{label:"Extremo",value:4}],
     questions:["¿Cuánto tiempo ocupa con pensamientos obsesivos?","¿Cuánto interfieren los pensamientos obsesivos en su vida?","¿Cuánta angustia le producen los pensamientos obsesivos?","¿Cuánto se resiste a los pensamientos obsesivos?","¿Cuánto control tiene sobre los pensamientos obsesivos?","¿Cuánto tiempo dedica a las compulsiones?","¿Cuánto interfieren las compulsiones en su vida?","¿Cuánta angustia si no pudiera realizar las compulsiones?","¿Cuánto se resiste a las compulsiones?","¿Cuánto control tiene sobre las compulsiones?"],
-    maxScore:40,
-    score:(t)=>t<=7?{level:"Sub-clínico",color:"#22c55e",desc:"Sin TOC clínicamente significativo"}:t<=15?{level:"Leve",color:"#86efac",desc:"TOC leve"}:t<=23?{level:"Moderado",color:"#fbbf24",desc:"TOC moderado"}:t<=31?{level:"Severo",color:"#f97316",desc:"TOC severo"}:{level:"Extremo",color:"#ef4444",desc:"TOC extremo — intervención intensiva"} },
+    maxScore:40, score:(t)=>t<=7?{level:"Sub-clínico",color:"#22c55e",desc:"Sin TOC clínicamente significativo"}:t<=15?{level:"Leve",color:"#86efac",desc:"TOC leve"}:t<=23?{level:"Moderado",color:"#fbbf24",desc:"TOC moderado"}:t<=31?{level:"Severo",color:"#f97316",desc:"TOC severo"}:{level:"Extremo",color:"#ef4444",desc:"TOC extremo — intervención intensiva"} },
   bpq:{ id:"bpq",name:"BPQ",fullName:"Borderline Personality Questionnaire",category:"personalidad",duration:"5-8 min",
     instructions:"Responda sobre cómo se siente y se comporta habitualmente.",
     options:[{label:"Falso",value:0},{label:"Verdadero",value:1}],
     questions:["Mis relaciones tienen muchos altibajos","Cuando estoy enojado/a pienso que la persona es completamente mala","Mi imagen de mí mismo/a cambia con mucha frecuencia","Me comprometo en actividades impulsivas que pueden hacerme daño","He amenazado con suicidarme o me he herido","Mi estado de ánimo cambia muy rápidamente","Generalmente me siento vacío/a por dentro","Bajo estrés me vuelvo paranoico/a o me desconecto","Tengo miedo intenso a que me abandonen","A menudo actúo de manera impulsiva"],
     maxScore:10, score:(t)=>t<=3?{level:"Sin indicadores",color:"#22c55e",desc:"Sin indicadores"}:t<=5?{level:"Rasgos presentes",color:"#fbbf24",desc:"Evaluación recomendada"}:{level:"Alta probabilidad",color:"#ef4444",desc:"Diagnóstico formal indicado"} },
 };
-
-const MOCK_PROFESSIONALS = [
-  { id:"prof1", name:"Dr. Rami Díaz López", specialty:"Psiquiatría", matricula:"MP 12345", email:"rami@itmed.com" },
-];
-
-const MOCK_PATIENTS = [
-  { id:"p1", name:"María González", age:34, dob:"1990-03-15", email:"maria@email.com", whatsapp:"+5493413001234",
-    evaluations:[
-      {id:"e1",testId:"phq9",date:"2024-10-15",answers:[1,2,1,2,1,1,1,0,0],total:9},
-      {id:"e2",testId:"phq9",date:"2025-01-20",answers:[0,1,1,1,0,1,1,0,0],total:5},
-      {id:"e3",testId:"phq9",date:"2025-04-10",answers:[0,0,1,1,0,0,0,0,0],total:2},
-      {id:"e4",testId:"gad7",date:"2025-01-20",answers:[2,2,1,2,1,1,1],total:10},
-      {id:"e5",testId:"gad7",date:"2025-04-10",answers:[1,1,1,1,0,1,0],total:5},
-    ]},
-  { id:"p2", name:"Carlos Rodríguez", age:45, dob:"1979-07-22", email:"carlos@email.com", whatsapp:"+5493415559876",
-    evaluations:[
-      {id:"e6",testId:"gad7",date:"2025-02-05",answers:[2,2,2,3,1,2,1],total:13},
-      {id:"e7",testId:"gad7",date:"2025-04-01",answers:[1,1,2,2,1,1,1],total:9},
-      {id:"e8",testId:"audit",date:"2025-03-10",answers:[2,2,1,1,0,0,1,0,0,1],total:8},
-    ]},
-];
 
 // ─── SEMÁFORO ────────────────────────────────────────────────────────────────
 function getSemaforo(testId, total, prevTotal, answers) {
@@ -197,7 +174,6 @@ async function exportPDF(patient,ev,td,text,semaforo,nextActions,status,profName
   const doc=new JsPDF({orientation:"portrait",unit:"mm",format:"a4"});
   const W=210,margin=20,col=W-margin*2;
   let y=20;
-  // Header
   doc.setFillColor(15,23,42);doc.rect(0,0,W,28,"F");
   doc.setFontSize(20);doc.setFont("helvetica","bold");doc.setTextColor(255,255,255);
   doc.text("COGN",margin,18);
@@ -207,13 +183,11 @@ async function exportPDF(patient,ev,td,text,semaforo,nextActions,status,profName
   doc.text("EVALUACIÓN EN SALUD MENTAL",margin+cw+doc.getTextWidth("IA")+4,18);
   doc.text(new Date().toLocaleDateString("es-AR",{day:"2-digit",month:"long",year:"numeric"}),W-margin,18,{align:"right"});
   y=36;
-  // Semáforo
   const sc={"Verde":[34,197,94],"Amarillo":[251,191,36],"Naranja":[249,115,22],"Rojo":[239,68,68]}[semaforo.label]||[148,163,184];
   doc.setFillColor(...sc);doc.roundedRect(margin,y,col,14,2,2,"F");
   doc.setFontSize(10);doc.setFont("helvetica","bold");doc.setTextColor(255,255,255);
   doc.text(`${semaforo.label} — ${semaforo.desc}`,margin+4,y+9);
   y+=20;
-  // Info
   doc.setFontSize(9);doc.setFont("helvetica","normal");doc.setTextColor(100,116,139);
   doc.text("INFORME CLÍNICO DE EVALUACIÓN PSICOLÓGICA",margin,y);y+=5;
   doc.setDrawColor(71,85,105);doc.setLineWidth(0.3);doc.line(margin,y,W-margin,y);y+=5;
@@ -224,7 +198,6 @@ async function exportPDF(patient,ev,td,text,semaforo,nextActions,status,profName
     doc.setFont("helvetica","normal");doc.setTextColor(30,30,30);doc.text(v,margin+44,y);y+=6;
   });
   y+=2;doc.setDrawColor(220,220,220);doc.line(margin,y,W-margin,y);y+=5;
-  // Report text
   doc.setFontSize(10);doc.setFont("helvetica","bold");doc.setTextColor(30,30,30);doc.text("INFORME CLÍNICO",margin,y);y+=6;
   const cleanText=(text||"").replace(/\*\*/g,"").replace(/###/g,"").replace(/##/g,"");
   cleanText.split("\n").filter(l=>l.trim()).forEach(line=>{
@@ -234,7 +207,6 @@ async function exportPDF(patient,ev,td,text,semaforo,nextActions,status,profName
     const w=doc.splitTextToSize(line,col);doc.text(w,margin,y);y+=w.length*(isH?5:4.5)+(isH?2:1);
   });
   y+=4;doc.setDrawColor(220,220,220);doc.line(margin,y,W-margin,y);y+=4;
-  // Next actions
   if(nextActions?.length>0){
     if(y>240){doc.addPage();y=20;}
     doc.setFontSize(10);doc.setFont("helvetica","bold");doc.setTextColor(30,30,30);doc.text("PRÓXIMAS ACCIONES SUGERIDAS",margin,y);y+=4;
@@ -246,7 +218,6 @@ async function exportPDF(patient,ev,td,text,semaforo,nextActions,status,profName
     });
     y+=2;doc.setDrawColor(220,220,220);doc.line(margin,y,W-margin,y);y+=4;
   }
-  // Firma
   if(status==="firmado"&&profName){
     if(y>250){doc.addPage();y=20;}
     doc.setFontSize(9);doc.setFont("helvetica","bold");doc.setTextColor(34,197,94);
@@ -256,7 +227,6 @@ async function exportPDF(patient,ev,td,text,semaforo,nextActions,status,profName
     doc.text(`Fecha de firma: ${new Date().toLocaleDateString("es-AR")}`,margin,y);y+=5;
     doc.text("Sistema COGNIA — Evaluaciones en Salud Mental — ITMED",margin,y);y+=5;
   }
-  // Footer
   const tp=doc.internal.getNumberOfPages();
   for(let i=1;i<=tp;i++){
     doc.setPage(i);doc.setFillColor(15,23,42);doc.rect(0,287,W,10,"F");
@@ -276,20 +246,7 @@ async function generateReport(patient,ev,td){
   const next=getNextActions(ev.testId,ev.total,sem,ev.answers);
   const trend=prev?`Evaluación previa: ${prev.total} pts (${prev.date}). Cambio: ${ev.total-prev.total>0?"+":""}${ev.total-prev.total} pts — ${sem.worsening?"EMPEORAMIENTO CLÍNICAMENTE RELEVANTE":ev.total<prev.total?"mejoría clínica":"sin cambio"}.`:"Primera evaluación registrada.";
   const suicideAlert=(ev.testId==="phq9"&&ev.answers?.[8]>=2)||(ev.testId==="bdi2"&&ev.answers?.[8]>=2);
-  const prompt=`Eres asistente clínico en salud mental. Genera informe clínico profesional en español.
-
-Paciente: ${patient.name}, ${patient.age} años
-Instrumento: ${td.fullName} (${td.name})
-Área: ${CATEGORIES[td.category]?.label}
-Puntaje: ${ev.total}/${td.maxScore} — ${sr.level}
-Alerta: ${sem.label} — ${sem.desc}
-Fecha: ${ev.date}
-${trend}
-${suicideAlert?"ALERTA URGENTE: Presencia de ideación suicida.":""}
-
-Incluir: 1. Resumen ejecutivo (2-3 oraciones) 2. Interpretación clínica 3. ${sem.worsening?"Análisis del empeoramiento":"Áreas de atención prioritaria"} 4. 3-4 líneas terapéuticas basadas en evidencia 5. Próximas acciones sugeridas: ${next.join("; ")} (aclarar que requieren validación profesional)
-
-Tono clínico, empático, basado en evidencia. Máximo 420 palabras.`;
+  const prompt=`Eres asistente clínico en salud mental. Genera informe clínico profesional en español.\n\nPaciente: ${patient.name}, ${patient.age} años\nInstrumento: ${td.fullName} (${td.name})\nÁrea: ${CATEGORIES[td.category]?.label}\nPuntaje: ${ev.total}/${td.maxScore} — ${sr.level}\nAlerta: ${sem.label} — ${sem.desc}\nFecha: ${ev.date}\n${trend}\n${suicideAlert?"ALERTA URGENTE: Presencia de ideación suicida.":""}\n\nIncluir: 1. Resumen ejecutivo (2-3 oraciones) 2. Interpretación clínica 3. ${sem.worsening?"Análisis del empeoramiento":"Áreas de atención prioritaria"} 4. 3-4 líneas terapéuticas basadas en evidencia 5. Próximas acciones sugeridas: ${next.join("; ")} (aclarar que requieren validación profesional)\n\nTono clínico, empático, basado en evidencia. Máximo 420 palabras.`;
   const r=await fetch("https://cognia-ai.ramidiazlopez.workers.dev",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-5",max_tokens:1200,messages:[{role:"user",content:prompt}]})});
   const data=await r.json();
   return {text:data.content?.[0]?.text||"No se pudo generar el informe.",semaforo:sem,nextActions:next};
@@ -336,7 +293,6 @@ function EvolutionChart({patient,testId}){
   );
 }
 
-// ─── STATISTICS VIEW ─────────────────────────────────────────────────────────
 function Statistics({patients}){
   const allEvals=patients.flatMap(p=>p.evaluations.map(e=>({...e,patient:p})));
   const byTest={};
@@ -391,7 +347,6 @@ function Statistics({patients}){
   );
 }
 
-// ─── PATIENT TEST VIEW ────────────────────────────────────────────────────────
 function PatientTestView({testId,patientName,onComplete}){
   const test=TESTS[testId];const cat=CATEGORIES[test.category];
   const [answers,setAnswers]=useState(Array(test.questions.length).fill(null));
@@ -452,13 +407,22 @@ export default function SaludMental({onBack, professional, supabase}){
   const [patients,setPatients]=useState([]);
   const [dbLoading,setDbLoading]=useState(true);
 
-  // Load patients from Supabase
+  // ── NUEVO: estado para gestión de profesionales ──
+  const [allProfessionals,setAllProfessionals]=useState([]);
+  const [showProfesionalesModal,setShowProfesionalesModal]=useState(false);
+  const [newProfForm,setNewProfForm]=useState({nombre:"",apellido:"",especialidad:"Psiquiatra",matricula:"",email:"",password:""});
+  const [profFormLoading,setProfFormLoading]=useState(false);
+  const [profFormMsg,setProfFormMsg]=useState(null);
+  // ── NUEVO: estado para confirmar eliminación ──
+  const [confirmDelete,setConfirmDelete]=useState(null); // { patientId, patientName }
+
   useEffect(()=>{
     if(!supabase||!professional){setDbLoading(false);return;}
     let mounted=true;
-    const loadPatients=async()=>{
+    const loadData=async()=>{
       setDbLoading(true);
       try{
+        // Cargar pacientes
         const {data:pats}=await supabase.from("patients").select("*").eq("professional_id",professional.id).order("created_at",{ascending:false});
         if(!mounted) return;
         if(pats&&pats.length>0){
@@ -468,13 +432,16 @@ export default function SaludMental({onBack, professional, supabase}){
           }));
           if(mounted) setPatients(patsWithEvals);
         }
+        // Cargar todos los profesionales (solo admin/propietario puede verlos)
+        const {data:profs}=await supabase.from("professionals").select("id,nombre,apellido,especialidad,matricula,email").order("created_at",{ascending:true});
+        if(mounted&&profs) setAllProfessionals(profs);
       } catch(err){console.error("Load error:",err);}
       if(mounted) setDbLoading(false);
     };
-    loadPatients();
+    loadData();
     return ()=>{mounted=false;};
   },[professional]);
-  const [professionals]=useState(MOCK_PROFESSIONALS);
+
   const [view,setView]=useState("dashboard");
   const [selectedPatientId,setSelectedPatientId]=useState(null);
   const [report,setReport]=useState(null);
@@ -543,6 +510,45 @@ export default function SaludMental({onBack, professional, supabase}){
     setNewForm({name:"",age:"",dob:"",email:"",whatsapp:""});setShowNewPatient(false);
   };
 
+  // ── NUEVO: eliminar paciente ──
+  const handleDeletePatient=async(patientId)=>{
+    if(supabase){
+      // Primero eliminar evaluaciones del paciente
+      await supabase.from("evaluations").delete().eq("patient_id",patientId);
+      // Luego eliminar el paciente
+      await supabase.from("patients").delete().eq("id",patientId);
+    }
+    setPatients(prev=>prev.filter(p=>p.id!==patientId));
+    if(selectedPatientId===patientId){setSelectedPatientId(null);setView("dashboard");}
+    setConfirmDelete(null);
+  };
+
+  // ── NUEVO: agregar profesional ──
+  const handleAddProfessional=async()=>{
+    if(!newProfForm.nombre||!newProfForm.apellido||!newProfForm.email||!newProfForm.password){
+      setProfFormMsg({type:"error",text:"Completá nombre, apellido, email y contraseña."});return;
+    }
+    setProfFormLoading(true);setProfFormMsg(null);
+    try{
+      // Crear usuario en Supabase Auth
+      const {data,error}=await supabase.auth.admin
+        ? await supabase.auth.admin.createUser({email:newProfForm.email,password:newProfForm.password,email_confirm:true})
+        : await supabase.auth.signUp({email:newProfForm.email,password:newProfForm.password});
+      if(error){setProfFormMsg({type:"error",text:error.message});setProfFormLoading(false);return;}
+      const userId=data?.user?.id;
+      if(userId){
+        const {data:profData}=await supabase.from("professionals").insert({
+          id:userId,nombre:newProfForm.nombre,apellido:newProfForm.apellido,
+          especialidad:newProfForm.especialidad,matricula:newProfForm.matricula,email:newProfForm.email
+        }).select().single();
+        if(profData) setAllProfessionals(prev=>[...prev,profData]);
+      }
+      setProfFormMsg({type:"success",text:`Profesional ${newProfForm.nombre} ${newProfForm.apellido} creado. Debe confirmar su email.`});
+      setNewProfForm({nombre:"",apellido:"",especialidad:"Psiquiatra",matricula:"",email:"",password:""});
+    }catch(e){setProfFormMsg({type:"error",text:"Error al crear profesional."});}
+    setProfFormLoading(false);
+  };
+
   if(simulatingTest) return <PatientTestView testId={simulatingTest.testId} patientName={simulatingTest.patientName} onComplete={(a,t)=>handleCompleteTest(simulatingTest.patientId,simulatingTest.testId,a,t)}/>;
 
   const S={
@@ -554,6 +560,7 @@ export default function SaludMental({onBack, professional, supabase}){
     ghost:{background:"transparent",color:"#94a3b8",border:"1px solid #334155",borderRadius:9,padding:"7px 14px",fontSize:12,cursor:"pointer",fontFamily:"inherit"},
     label:{fontSize:10,fontWeight:700,letterSpacing:2,color:"#475569",textTransform:"uppercase"},
     input:{width:"100%",background:"#070c18",border:"1px solid #334155",borderRadius:9,padding:"9px 12px",color:"#e2e8f0",fontSize:13,fontFamily:"inherit",boxSizing:"border-box"},
+    danger:{background:"transparent",color:"#ef4444",border:"1px solid #ef444455",borderRadius:8,padding:"5px 10px",fontSize:11,cursor:"pointer",fontFamily:"inherit"},
   };
 
   const filteredTests=Object.values(TESTS).filter(t=>{
@@ -567,7 +574,97 @@ export default function SaludMental({onBack, professional, supabase}){
       <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet"/>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}} @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}} *{box-sizing:border-box}`}</style>
 
-      {/* MODALS */}
+      {/* ── MODAL CONFIRMAR ELIMINACIÓN ── */}
+      {confirmDelete&&(
+        <div style={{position:"fixed",inset:0,background:"#000c",display:"flex",alignItems:"center",justifyContent:"center",zIndex:300}}>
+          <div style={{...S.card,maxWidth:380,width:"90%",animation:"fadeIn 0.2s ease",border:"1px solid #ef444444"}}>
+            <h3 style={{color:"#ef4444",margin:"0 0 8px",fontFamily:"'DM Serif Display'"}}>Eliminar paciente</h3>
+            <p style={{color:"#94a3b8",fontSize:14,marginBottom:6}}>¿Estás seguro que querés eliminar a <strong style={{color:"#e2e8f0"}}>{confirmDelete.patientName}</strong>?</p>
+            <p style={{color:"#64748b",fontSize:12,marginBottom:20}}>Se eliminarán también todas sus evaluaciones. Esta acción no se puede deshacer.</p>
+            <div style={{display:"flex",gap:8}}>
+              <button style={{...S.ghost,flex:1}} onClick={()=>setConfirmDelete(null)}>Cancelar</button>
+              <button style={{...S.btn("#ef4444"),flex:1}} onClick={()=>handleDeletePatient(confirmDelete.patientId)}>Sí, eliminar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL GESTIÓN DE PROFESIONALES ── */}
+      {showProfesionalesModal&&(
+        <div style={{position:"fixed",inset:0,background:"#000c",display:"flex",alignItems:"center",justifyContent:"center",zIndex:300,padding:20}}>
+          <div style={{...S.card,maxWidth:560,width:"100%",maxHeight:"90vh",overflow:"auto",animation:"fadeIn 0.2s ease"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+              <h3 style={{color:"#f1f5f9",margin:0,fontFamily:"'DM Serif Display'",fontSize:22}}>Gestión de profesionales</h3>
+              <button style={{...S.ghost,padding:"4px 10px"}} onClick={()=>{setShowProfesionalesModal(false);setProfFormMsg(null);}}>✕</button>
+            </div>
+
+            {/* Lista de profesionales existentes */}
+            <div style={{marginBottom:24}}>
+              <p style={{...S.label,marginBottom:10}}>Profesionales registrados ({allProfessionals.length})</p>
+              {allProfessionals.length===0?(
+                <p style={{color:"#475569",fontSize:13}}>Ningún profesional registrado aún.</p>
+              ):(
+                allProfessionals.map(p=>(
+                  <div key={p.id} style={{background:"#070c18",border:"1px solid #1e293b",borderRadius:10,padding:"12px 14px",marginBottom:8,display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                    <div>
+                      <p style={{margin:"0 0 2px",fontSize:13,fontWeight:600,color:"#e2e8f0"}}>{p.nombre} {p.apellido}</p>
+                      <p style={{margin:0,fontSize:11,color:"#7c3aed"}}>{p.especialidad}{p.matricula?" · Mat. "+p.matricula:""}</p>
+                      <p style={{margin:0,fontSize:11,color:"#475569"}}>{p.email}</p>
+                    </div>
+                    {p.id===professional?.id&&(
+                      <span style={{background:"#22c55e22",color:"#22c55e",border:"1px solid #22c55e44",borderRadius:6,padding:"2px 8px",fontSize:10,fontWeight:700}}>Vos</span>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Formulario nuevo profesional */}
+            <div style={{borderTop:"1px solid #1e293b",paddingTop:20}}>
+              <p style={{...S.label,marginBottom:14}}>Agregar nuevo profesional</p>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
+                <div>
+                  <p style={{...S.label,marginBottom:5}}>Nombre</p>
+                  <input value={newProfForm.nombre} onChange={e=>setNewProfForm(p=>({...p,nombre:e.target.value}))} placeholder="María" style={S.input}/>
+                </div>
+                <div>
+                  <p style={{...S.label,marginBottom:5}}>Apellido</p>
+                  <input value={newProfForm.apellido} onChange={e=>setNewProfForm(p=>({...p,apellido:e.target.value}))} placeholder="García" style={S.input}/>
+                </div>
+              </div>
+              <div style={{marginBottom:10}}>
+                <p style={{...S.label,marginBottom:5}}>Especialidad</p>
+                <select value={newProfForm.especialidad} onChange={e=>setNewProfForm(p=>({...p,especialidad:e.target.value}))} style={{...S.input}}>
+                  {["Psiquiatra","Psicólogo/a","Médico/a","Neuropsicólogo/a","Médico/a Laboral","Otro"].map(e=><option key={e}>{e}</option>)}
+                </select>
+              </div>
+              <div style={{marginBottom:10}}>
+                <p style={{...S.label,marginBottom:5}}>Matrícula (opcional)</p>
+                <input value={newProfForm.matricula} onChange={e=>setNewProfForm(p=>({...p,matricula:e.target.value}))} placeholder="MP 12345" style={S.input}/>
+              </div>
+              <div style={{marginBottom:10}}>
+                <p style={{...S.label,marginBottom:5}}>Email (será el usuario de acceso)</p>
+                <input type="email" value={newProfForm.email} onChange={e=>setNewProfForm(p=>({...p,email:e.target.value}))} placeholder="colega@hospital.com" style={S.input}/>
+              </div>
+              <div style={{marginBottom:16}}>
+                <p style={{...S.label,marginBottom:5}}>Contraseña inicial</p>
+                <input type="password" value={newProfForm.password} onChange={e=>setNewProfForm(p=>({...p,password:e.target.value}))} placeholder="Mínimo 6 caracteres" style={S.input}/>
+                <p style={{fontSize:11,color:"#475569",marginTop:4}}>El profesional recibirá un email de confirmación y podrá cambiar su contraseña.</p>
+              </div>
+              {profFormMsg&&(
+                <div style={{background:profFormMsg.type==="error"?"#1a0a0a":"#0a1a0a",border:`1px solid ${profFormMsg.type==="error"?"#7f1d1d":"#166534"}`,borderRadius:8,padding:"10px 14px",marginBottom:14}}>
+                  <p style={{margin:0,fontSize:13,color:profFormMsg.type==="error"?"#fca5a5":"#86efac"}}>{profFormMsg.text}</p>
+                </div>
+              )}
+              <button onClick={handleAddProfessional} disabled={profFormLoading} style={{...S.btn("#7c3aed"),width:"100%",opacity:profFormLoading?0.6:1}}>
+                {profFormLoading?"Creando cuenta...":"+ Agregar profesional"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL ASIGNAR TEST */}
       {assignTest&&(
         <div style={{position:"fixed",inset:0,background:"#000a",display:"flex",alignItems:"center",justifyContent:"center",zIndex:200}}>
           <div style={{...S.card,maxWidth:440,width:"90%",animation:"fadeIn 0.2s ease"}}>
@@ -577,7 +674,6 @@ export default function SaludMental({onBack, professional, supabase}){
             <div style={{background:"#070c18",borderRadius:9,padding:12,margin:"12px 0",border:"1px solid #334155",wordBreak:"break-all"}}>
               <span style={{color:"#64748b",fontSize:11,fontFamily:"monospace"}}>https://cogniia.com/test/{assignTest.testId}?pid={assignTest.patientId}&token=demo</span>
             </div>
-            {/* Schedule next test */}
             <div style={{marginBottom:14}}>
               <p style={{...S.label,marginBottom:6}}>Programar próxima evaluación</p>
               <input type="date" value={scheduledTests[assignTest.patientId+assignTest.testId]||""} onChange={e=>setScheduledTests(s=>({...s,[assignTest.patientId+assignTest.testId]:e.target.value}))} style={{...S.input,marginBottom:6}}/>
@@ -598,6 +694,7 @@ export default function SaludMental({onBack, professional, supabase}){
         </div>
       )}
 
+      {/* MODAL INFORME */}
       {report&&(
         <div style={{position:"fixed",inset:0,background:"#000c",display:"flex",alignItems:"center",justifyContent:"center",zIndex:200,padding:20}}>
           <div style={{...S.card,maxWidth:600,width:"100%",maxHeight:"90vh",overflow:"auto",animation:"fadeIn 0.2s ease"}}>
@@ -654,6 +751,7 @@ export default function SaludMental({onBack, professional, supabase}){
         </div>
       )}
 
+      {/* MODAL NUEVO PACIENTE */}
       {showNewPatient&&(
         <div style={{position:"fixed",inset:0,background:"#000a",display:"flex",alignItems:"center",justifyContent:"center",zIndex:200}}>
           <div style={{...S.card,maxWidth:400,width:"90%",animation:"fadeIn 0.2s ease"}}>
@@ -672,7 +770,7 @@ export default function SaludMental({onBack, professional, supabase}){
         </div>
       )}
 
-      {/* PROFESSIONAL PROFILE MODAL */}
+      {/* MODAL PERFIL PROFESIONAL */}
       {showProfModal&&(
         <div style={{position:"fixed",inset:0,background:"#000a",display:"flex",alignItems:"center",justifyContent:"center",zIndex:300}}>
           <div style={{...S.card,maxWidth:400,width:"90%",animation:"fadeIn 0.2s ease"}}>
@@ -730,19 +828,37 @@ export default function SaludMental({onBack, professional, supabase}){
           </svg>
           <p style={{fontSize:10,fontWeight:600,letterSpacing:3,color:"#475569",textTransform:"uppercase",margin:0}}>salud mental</p>
         </div>
+
         {[{id:"dashboard",label:"Panel",icon:"◈"},{id:"tests",label:"Tests",icon:"◎"},{id:"stats",label:"Estadísticas",icon:"◉"}].map(item=>(
           <button key={item.id} onClick={()=>setView(item.id)} style={{background:view===item.id?"#1e293b":"transparent",border:"none",borderRadius:9,padding:"9px 12px",color:view===item.id?"#e2e8f0":"#64748b",cursor:"pointer",textAlign:"left",fontSize:13,fontFamily:"inherit",display:"flex",gap:9,alignItems:"center",marginBottom:3,width:"100%"}}>
             <span>{item.icon}</span>{item.label}
           </button>
         ))}
+
+        {/* ── NUEVO: botón gestión de profesionales ── */}
+        <button onClick={()=>setShowProfesionalesModal(true)} style={{background:"transparent",border:"none",borderRadius:9,padding:"9px 12px",color:"#64748b",cursor:"pointer",textAlign:"left",fontSize:13,fontFamily:"inherit",display:"flex",gap:9,alignItems:"center",marginBottom:3,width:"100%"}}>
+          <span>👥</span>Profesionales
+        </button>
+
         <div style={{margin:"18px 0 8px"}}><p style={{...S.label,paddingLeft:12,marginBottom:7}}>Pacientes</p></div>
+
         {patients.map(p=>(
-          <button key={p.id} onClick={()=>{setSelectedPatientId(p.id);setView("patient");setReport(null);setActiveTab("evaluaciones");}} style={{background:(view==="patient"&&selectedPatientId===p.id)?"#1e293b":"transparent",border:"none",borderRadius:9,padding:"7px 12px",color:(view==="patient"&&selectedPatientId===p.id)?"#e2e8f0":"#64748b",cursor:"pointer",textAlign:"left",fontSize:12,fontFamily:"inherit",marginBottom:2,width:"100%",display:"flex",alignItems:"center",gap:9}}>
-            <span style={{width:22,height:22,borderRadius:"50%",background:"#1e293b",display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:"#AFA9EC",flexShrink:0}}>{p.name.split(" ").map(x=>x[0]).join("").slice(0,2)}</span>
-            <span style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.name}</span>
-          </button>
+          <div key={p.id} style={{display:"flex",alignItems:"center",gap:4,marginBottom:2}}>
+            <button onClick={()=>{setSelectedPatientId(p.id);setView("patient");setReport(null);setActiveTab("evaluaciones");}} style={{background:(view==="patient"&&selectedPatientId===p.id)?"#1e293b":"transparent",border:"none",borderRadius:9,padding:"7px 8px",color:(view==="patient"&&selectedPatientId===p.id)?"#e2e8f0":"#64748b",cursor:"pointer",textAlign:"left",fontSize:12,fontFamily:"inherit",flex:1,display:"flex",alignItems:"center",gap:8,minWidth:0}}>
+              <span style={{width:22,height:22,borderRadius:"50%",background:"#1e293b",display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:"#AFA9EC",flexShrink:0}}>{p.name.split(" ").map(x=>x[0]).join("").slice(0,2)}</span>
+              <span style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.name}</span>
+            </button>
+            {/* ── NUEVO: botón eliminar en sidebar ── */}
+            <button onClick={()=>setConfirmDelete({patientId:p.id,patientName:p.name})} title="Eliminar paciente" style={{background:"transparent",border:"none",color:"#334155",cursor:"pointer",padding:"4px 6px",fontSize:13,borderRadius:6,flexShrink:0}}
+              onMouseEnter={e=>e.target.style.color="#ef4444"}
+              onMouseLeave={e=>e.target.style.color="#334155"}>
+              ✕
+            </button>
+          </div>
         ))}
+
         <button onClick={()=>setShowNewPatient(true)} style={{background:"transparent",border:"1px dashed #334155",borderRadius:9,padding:"7px 12px",color:"#475569",cursor:"pointer",textAlign:"left",fontSize:12,fontFamily:"inherit",marginTop:6,width:"100%"}}>+ Nuevo paciente</button>
+
         <div style={{marginTop:"auto",paddingTop:20,borderTop:"1px solid #1e293b"}}>
           <button onClick={()=>setShowProfModal(true)} style={{width:"100%",background:"transparent",border:"1px solid #334155",borderRadius:9,padding:"10px 12px",cursor:"pointer",textAlign:"left",fontFamily:"inherit",display:"flex",alignItems:"center",gap:8}}>
             <div style={{width:28,height:28,borderRadius:"50%",background:"#7c3aed22",border:"1px solid #7c3aed44",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,flexShrink:0}}>👤</div>
@@ -753,13 +869,10 @@ export default function SaludMental({onBack, professional, supabase}){
         </div>
       </div>
 
-      {/* MAIN */}
+      {/* MAIN CONTENT */}
       <div style={S.main}>
-
-        {/* LOADING */}
         {dbLoading&&<div style={{position:"fixed",inset:0,background:"#070c18cc",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500}}><div style={{width:36,height:36,borderRadius:"50%",border:"3px solid #1e293b",borderTopColor:"#7c3aed",animation:"spin 1s linear infinite"}}/></div>}
 
-        {/* DASHBOARD */}
         {view==="dashboard"&&(
           <div style={{animation:"fadeIn 0.3s ease"}}>
             <h1 style={{fontFamily:"'DM Serif Display'",fontSize:34,margin:"0 0 4px",color:"#f1f5f9"}}>Panel general</h1>
@@ -786,11 +899,11 @@ export default function SaludMental({onBack, professional, supabase}){
                   </div>
                 );
               })}
+              {patients.reduce((s,p)=>s+p.evaluations.length,0)===0&&<p style={{color:"#475569",fontSize:13,textAlign:"center",padding:24}}>Sin evaluaciones todavía.</p>}
             </div>
           </div>
         )}
 
-        {/* TESTS */}
         {view==="tests"&&(
           <div style={{animation:"fadeIn 0.3s ease"}}>
             <h1 style={{fontFamily:"'DM Serif Display'",fontSize:34,margin:"0 0 4px",color:"#f1f5f9"}}>Tests disponibles</h1>
@@ -818,20 +931,20 @@ export default function SaludMental({onBack, professional, supabase}){
           </div>
         )}
 
-        {/* STATS */}
         {view==="stats"&&<Statistics patients={patients}/>}
 
-        {/* PATIENT */}
         {view==="patient"&&currentPatient&&(
           <div style={{animation:"fadeIn 0.3s ease"}}>
             <div style={{display:"flex",alignItems:"start",justifyContent:"space-between",marginBottom:24,flexWrap:"wrap",gap:14}}>
               <div>
                 <p style={{...S.label,marginBottom:3}}>Paciente</p>
                 <h1 style={{fontFamily:"'DM Serif Display'",fontSize:34,margin:"0 0 4px",color:"#f1f5f9"}}>{currentPatient.name}</h1>
-                <div style={{display:"flex",gap:14,flexWrap:"wrap"}}>
+                <div style={{display:"flex",gap:14,flexWrap:"wrap",alignItems:"center"}}>
                   {currentPatient.age>0&&<span style={{color:"#64748b",fontSize:13}}>{currentPatient.age} años</span>}
                   {currentPatient.email&&<span style={{color:"#64748b",fontSize:13}}>✉ {currentPatient.email}</span>}
                   {currentPatient.whatsapp&&<span style={{color:"#25D366",fontSize:13}}>📱 {currentPatient.whatsapp}</span>}
+                  {/* ── NUEVO: botón eliminar en vista paciente ── */}
+                  <button onClick={()=>setConfirmDelete({patientId:currentPatient.id,patientName:currentPatient.name})} style={S.danger}>🗑 Eliminar paciente</button>
                 </div>
               </div>
               <div style={{position:"relative"}}>
