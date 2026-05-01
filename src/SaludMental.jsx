@@ -403,7 +403,7 @@ function PatientTestView({testId,patientName,onComplete}){
 }
 
 // ─── MAIN MODULE ──────────────────────────────────────────────────────────────
-export default function SaludMental({onBack, professional, supabase}){
+export default function SaludMental({onBack, professional, supabase, publicMode, publicTestId, publicPatientId, publicPatientName, publicOnComplete}){
   const [patients,setPatients]=useState([]);
   const [dbLoading,setDbLoading]=useState(true);
 
