@@ -404,7 +404,16 @@ function PatientTestView({testId,patientName,onComplete}){
 
 // ─── MAIN MODULE ──────────────────────────────────────────────────────────────
 export default function SaludMental({onBack, professional, supabase, publicMode, publicTestId, publicPatientId, publicPatientName, publicOnComplete}){
-  const [patients,setPatients]=useState([]);
+// ── Modo público: paciente abre link de WhatsApp/email ──
+  if(publicMode && publicTestId && publicPatientId){
+    return <PatientTestView
+      testId={publicTestId}
+      patientName={publicPatientName||"Paciente"}
+      onComplete={(answers,total)=>{
+        if(publicOnComplete) publicOnComplete(answers,total);
+      }}
+    />;
+  }  const [patients,setPatients]=useState([]);
   const [dbLoading,setDbLoading]=useState(true);
 
   // ── NUEVO: estado para gestión de profesionales ──
