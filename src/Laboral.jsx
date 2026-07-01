@@ -93,6 +93,141 @@ const QUESTIONNAIRES = {
     aptitud:(t)=>t===0?"apto":t<=2?"restriccion":"no_apto",
     score:(t)=>t===0?{level:"Sin indicadores",color:"#22c55e"}:t<=2?{level:"Riesgo bajo",color:"#fbbf24"}:t<=5?{level:"Riesgo moderado",color:"#f97316"}:{level:"Juego patológico probable",color:"#ef4444"},
   },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // IISL-40 · Índice de Integración Social Laboral
+  // Instrumento psicosocial: 40 ítems · 10 dominios · Likert 1–5.
+  // A diferencia de los demás, NO usa aptitud(total): tiene su propio scoring
+  // (computeResult) que respeta ítems inversos y normaliza cada dominio a 0–100.
+  // ─────────────────────────────────────────────────────────────────────────
+  iisl40_lab: {
+    id:"iisl40_lab", name:"IISL-40", fullName:"Índice de Integración Social Laboral",
+    area:"Psicosocial", icon:"🧩", duration:"6 min",
+    instructions:"Durante los últimos tres meses, indique con qué frecuencia cada afirmación describe su situación.",
+    options:[
+      {label:"Nunca",value:1},
+      {label:"Rara vez",value:2},
+      {label:"Algunas veces",value:3},
+      {label:"Frecuentemente",value:4},
+      {label:"Siempre",value:5},
+    ],
+    // 40 ítems en orden de dominio (no se muestra al trabajador cuáles son inversos)
+    questions:[
+      // D1 · Red de apoyo social
+      "Tengo personas a quienes acudir cuando necesito ayuda.",
+      "Mi familia me brinda apoyo emocional.",
+      "Me siento acompañado en momentos difíciles.",
+      "Dispongo de alguien que me aconseje cuando tengo problemas.",
+      // D2 · Estabilidad familiar
+      "Mi hogar constituye un ambiente tranquilo.",
+      "Los conflictos familiares interfieren con mi trabajo.",
+      "Mi convivencia diaria favorece mi bienestar.",
+      "Las responsabilidades familiares son compatibles con mi actividad laboral.",
+      // D3 · Bienestar económico
+      "Mi situación económica me genera preocupación constante.",
+      "Logro cubrir adecuadamente mis gastos.",
+      "Mis deudas afectan mi concentración.",
+      "Me siento económicamente estable.",
+      // D4 · Calidad del sueño y recuperación
+      "Duermo entre 7 y 8 horas la mayoría de los días.",
+      "Me despierto descansado.",
+      "El cansancio afecta mi desempeño laboral.",
+      "Tengo horarios regulares para dormir.",
+      // D5 · Hábitos saludables
+      "Realizo actividad física regularmente.",
+      "Mantengo una alimentación saludable.",
+      "Realizo controles médicos periódicos.",
+      "Respeto los tratamientos indicados cuando corresponde.",
+      // D6 · Adaptación laboral
+      "Me adapto fácilmente a nuevos procedimientos.",
+      "Afronto adecuadamente los cambios.",
+      "Me siento comprometido con mi trabajo.",
+      "Considero que mi trabajo tiene sentido para mí.",
+      // D7 · Relaciones interpersonales
+      "Mantengo relaciones respetuosas con mis compañeros.",
+      "Resuelvo conflictos mediante el diálogo.",
+      "Recibo apoyo de mis superiores.",
+      "Me siento integrado al equipo.",
+      // D8 · Conductas de seguridad
+      "Cumplo siempre las normas de seguridad.",
+      "Evito conductas riesgosas.",
+      "Pienso antes de actuar.",
+      "Informo oportunamente situaciones inseguras.",
+      // D9 · Consumo y autocontrol
+      "El alcohol afecta mis responsabilidades.",
+      "He consumido sustancias antes de trabajar.",
+      "Mantengo control sobre mis impulsos.",
+      "Puedo manejar adecuadamente situaciones de estrés.",
+      // D10 · Integración social
+      "Participo en actividades recreativas.",
+      "Mantengo vínculos sociales fuera del trabajo.",
+      "Me siento parte de mi comunidad.",
+      "Considero que llevo una vida social satisfactoria.",
+    ],
+    // Dominio de cada ítem (mismo orden que questions)
+    domainOf:[0,0,0,0, 1,1,1,1, 2,2,2,2, 3,3,3,3, 4,4,4,4, 5,5,5,5, 6,6,6,6, 7,7,7,7, 8,8,8,8, 9,9,9,9],
+    // Ítems inversos (mismo orden que questions): true = se puntúa al revés (6 - valor)
+    inverse:[
+      false,false,false,false,   // D1
+      false,true, false,false,   // D2 (conflictos familiares)
+      true, false,true, false,   // D3 (preocupación económica · deudas)
+      false,false,true, false,   // D4 (cansancio afecta desempeño)
+      false,false,false,false,   // D5
+      false,false,false,false,   // D6
+      false,false,false,false,   // D7
+      false,false,false,false,   // D8
+      true, true, false,false,   // D9 (alcohol · sustancias)
+      false,false,false,false,   // D10
+    ],
+    domains:[
+      {name:"Red de apoyo social",              short:"Apoyo",       icon:"🤝"},
+      {name:"Estabilidad familiar",             short:"Familia",     icon:"🏠"},
+      {name:"Bienestar económico",              short:"Economía",    icon:"💰"},
+      {name:"Calidad del sueño y recuperación", short:"Sueño",       icon:"🌙"},
+      {name:"Hábitos saludables",               short:"Hábitos",     icon:"🥗"},
+      {name:"Adaptación laboral",               short:"Adaptación",  icon:"🔄"},
+      {name:"Relaciones interpersonales",       short:"Relaciones",  icon:"👥"},
+      {name:"Conductas de seguridad",           short:"Seguridad",   icon:"🦺"},
+      {name:"Consumo y autocontrol",            short:"Autocontrol", icon:"🧠"},
+      {name:"Integración social",               short:"Social",      icon:"🌐"},
+    ],
+    maxScore:100, // el índice global va de 0 a 100
+    describe:(r)=> (r&&r.global!=null) ? `Índice global IISL: ${r.global}/100 — ${r.band}` : "—",
+    // Scoring propio del IISL-40 (lo llama WorkerTestSession si existe computeResult)
+    computeResult:function(answers){
+      const q=this;
+      const sums=Array(10).fill(0);
+      q.domainOf.forEach((di,i)=>{
+        const raw=answers[i]||0;
+        const val=q.inverse[i] ? (6-raw) : raw;   // ítem inverso -> se da vuelta
+        sums[di]+=val;
+      });
+      // 4 ítems por dominio: suma 4–20 -> 0–100
+      const domainScores=sums.map(s=>Math.round(((s-4)/16)*100));
+      const global=Math.round(domainScores.reduce((a,b)=>a+b,0)/10);
+      const band =
+        global>=90 ? "Excelente integración social laboral" :
+        global>=80 ? "Integración muy adecuada" :
+        global>=70 ? "Integración adecuada" :
+        global>=60 ? "Riesgo leve" :
+        global>=50 ? "Riesgo moderado" :
+        global>=40 ? "Riesgo alto" :
+                     "Riesgo muy alto";
+      const protective=q.domains.filter((d,i)=>domainScores[i]>=80).map(d=>d.name);
+      const risk      =q.domains.filter((d,i)=>domainScores[i]<60 ).map(d=>d.name);
+
+      // ── MAPEO A APTITUD — DECISIÓN CLÍNICA (editable) ──────────────────────
+      // Un índice psicosocial de screening no declara "No apto" por sí solo:
+      // como máximo sugiere "con restricciones" (seguimiento). Cambiá el criterio
+      // acá si querés otro umbral o escalar a "no_apto" en roles críticos.
+      let aptitud = global>=70 ? "apto" : "restriccion";
+      // Ejemplo opcional de escalado en dominios sensibles (descomentar para usar):
+      // const iAuto=8, iSeg=7; // índices de "Consumo y autocontrol" y "Conductas de seguridad"
+      // if(domainScores[iAuto]<40 || domainScores[iSeg]<40) aptitud="restriccion";
+
+      return { total:global, global, band, domainScores, protective, risk, aptitud, answers };
+    },
+  },
 };
 
 // ─── COGNITIVE TESTS ─────────────────────────────────────────────────────────
@@ -436,7 +571,17 @@ async function generateLaboralReport(worker,evaluation,finalAptitud){
     const desc=td.describe?td.describe(r):(r.total!==undefined?`Puntaje: ${r.total}/${td.maxScore}`:JSON.stringify(r));
     return `${td.fullName||td.name}: ${desc} — ${APTITUD[r.aptitud]?.label||"—"}`;
   }).join("\n");
-  const prompt=`Eres médico especialista en medicina laboral. Generá un informe de aptitud psicofísica profesional en español.\n\nTrabajador: ${worker.name}\nDNI: ${worker.dni}\nEmpresa: ${worker.empresa}\nPuesto: ${worker.puesto}\nTurno: ${worker.turno}\nFecha: ${evaluation.date}\nResultado final: ${APTITUD[finalAptitud]?.label}\n\nTests realizados:\n${testsDesc}\n\nEl informe debe incluir:\n1. Conclusión de aptitud (1-2 oraciones)\n2. Hallazgos relevantes por área evaluada\n3. Restricciones operativas si corresponde\n4. Recomendaciones específicas para el puesto\n5. Próxima evaluación sugerida\n\nTono médico-laboral formal. Aclará que es orientativo y requiere validación profesional. Máximo 350 palabras.`;
+
+  // ── NUEVO: detalle psicosocial IISL-40, solo si ese test se incluyó ──
+  let iislBlock="";
+  const iisl=evaluation.tests["iisl40_lab"];
+  if(iisl&&iisl.domainScores&&QUESTIONNAIRES.iisl40_lab){
+    const doms=QUESTIONNAIRES.iisl40_lab.domains;
+    const detalle=doms.map((d,i)=>`- ${d.name}: ${iisl.domainScores[i]}/100`).join("\n");
+    iislBlock=`\n\nPERFIL PSICOSOCIAL (IISL-40) — Índice global ${iisl.global}/100 (${iisl.band}):\n${detalle}\nFactores protectores (≥80): ${iisl.protective.join(", ")||"ninguno destacado"}\nFactores de riesgo (<60): ${iisl.risk.join(", ")||"ninguno destacado"}\n\nIncluí además una sección titulada "Perfil psicosocial (IISL-40)" con: síntesis por dominios, factores protectores, factores de riesgo y recomendaciones preventivas personalizadas. No compares con una población de referencia (el instrumento aún no tiene baremo poblacional). No diagnostiques.`;
+  }
+
+  const prompt=`Eres médico especialista en medicina laboral. Generá un informe de aptitud psicofísica profesional en español.\n\nTrabajador: ${worker.name}\nDNI: ${worker.dni}\nEmpresa: ${worker.empresa}\nPuesto: ${worker.puesto}\nTurno: ${worker.turno}\nFecha: ${evaluation.date}\nResultado final: ${APTITUD[finalAptitud]?.label}\n\nTests realizados:\n${testsDesc}${iislBlock}\n\nEl informe debe incluir:\n1. Conclusión de aptitud (1-2 oraciones)\n2. Hallazgos relevantes por área evaluada\n3. Restricciones operativas si corresponde\n4. Recomendaciones específicas para el puesto\n5. Próxima evaluación sugerida\n\nTono médico-laboral formal. Aclará que es orientativo y requiere validación profesional. Máximo 400 palabras.`;
   const r=await fetch("https://cognia-ai.ramidiazlopez.workers.dev",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-5",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
   const data=await r.json();
   return data.content?.[0]?.text||"No se pudo generar el informe.";
@@ -454,9 +599,16 @@ function WorkerTestSession({worker,selectedTests,onComplete}){
 
   const handleQuestionnaireComplete=()=>{
     const td=QUESTIONNAIRES[current];
-    const total=currentAnswers.reduce((s,a)=>s+(a??0),0);
-    const apt=td.aptitud(total);
-    const newAnswers={...answers,[current]:{total,aptitud:apt,answers:currentAnswers}};
+    let result;
+    if(td.computeResult){
+      // Tests con scoring propio (ej. IISL-40: dominios, ítems inversos, índice 0–100)
+      result=td.computeResult(currentAnswers);
+    } else {
+      // Scoring estándar: suma simple -> aptitud(total)
+      const total=currentAnswers.reduce((s,a)=>s+(a??0),0);
+      result={total,aptitud:td.aptitud(total),answers:currentAnswers};
+    }
+    const newAnswers={...answers,[current]:result};
     setAnswers(newAnswers);setCurrentAnswers([]);
     if(step+1>=allTests.length) onComplete(newAnswers);
     else setStep(s=>s+1);
